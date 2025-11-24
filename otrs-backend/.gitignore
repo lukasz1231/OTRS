@@ -79,3 +79,4 @@ coverage-results/
 .DS_Store
 Thumbs.db
 
+.env
