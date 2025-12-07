@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+@theme {
+    --color-bialeTlo: #F0F2F4;
+    --color-przyciskiNiebieski: #3365A6;
+    --color-tekstSzary: #7D7E8C;
+    --color-placeholder: #7392A7;
+    --color-tekstSzaryCiemny: #313D40;
+}
