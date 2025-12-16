@@ -8,7 +8,7 @@
         
         <h2 class="text-xl font-bold text-tekstSzaryCiemny mb-2">Zapomniałeś hasła?</h2>
         <p class="text-sm text-tekstSzary text-center">
-          Wprowadź swój adres email, a wyślemy Ci link do resetowania hasła.
+          Wprowadź swój adres email, a wyślemy Ci link do resetowania hasła
         </p>
       </div>
 
@@ -19,7 +19,7 @@
           <input 
             type="email" 
             id="email" 
-            v-model="email"
+            v-model="formData.email"
             placeholder="jankowalski@example.pl" 
             class="w-full border border-tekstSzary/20 rounded-lg px-4 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
             required
@@ -53,12 +53,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const email = ref('');
 const isLoading = ref(false);
+
+const formData = reactive({
+  email: '',
+});
 
 const goBack = () => {
   router.push({ name: 'login' }); 
@@ -73,6 +76,5 @@ const handleSubmit = async () => {
   
   isLoading.value = false;
   
-  alert('Jeśli konto istnieje, link został wysłany.');
 };
 </script>
