@@ -18,7 +18,7 @@ namespace otrs_backend.Models
         public string PasswordHash { get; set; }
 
         public ICollection<Role> Roles { get; set; } = new List<Role>();
-        //public ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();
-        //public ICollection<Ticket> CreatedTickets { get; set; } = new List<Ticket>();
+        public ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();
+        public ICollection<Ticket> CreatedTickets { get; set; } = new List<Ticket>();
     }
 }

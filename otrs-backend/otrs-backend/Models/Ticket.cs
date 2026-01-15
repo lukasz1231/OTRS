@@ -21,5 +21,7 @@ namespace otrs_backend.Models
         public int StatusId { get; set; }
         public Status Status { get; set; }
         public ICollection<User> AssignedUsers { get; set; } = new List<User>();
+        public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
     }
 }
