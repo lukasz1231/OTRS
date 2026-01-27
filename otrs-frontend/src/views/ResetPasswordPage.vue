@@ -71,18 +71,29 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 const router = useRouter();
+const route = useRoute()
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 const isLoading = ref(false);
 const errorMessage = ref('');
+const token = ref('')
 
 const formData = reactive({
   password: '',
   confirmPassword: ''
+});
+
+onMounted(() => {
+  token.value = route.query.token;
+
+  if (!token.value) {
+    errorMessage.value = 'Link jest nieprawidłowy.';
+  }
 });
 
 const handleSubmit = async () => {
@@ -95,14 +106,24 @@ const handleSubmit = async () => {
     errorMessage.value = 'Hasło musi mieć co najmniej 8 znaków.';
     return;
   }
+  if (!token.value) {
+    errorMessage.value = 'Token jest nieprawidłowy.';
+    return;
+  }
 
   isLoading.value = true;
   
-  console.log(`Ustawianie nowego hasła`);
-  
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  isLoading.value = false;
+  try {
+    await axios.post('https://localhost:7054/api/auth/reset-password', {
+      newPassword: formData.password,
+      token: token.value
+    });
+    router.push('/login');
+  } catch (error) {
+    errorMessage.value = 'Wystąpił błąd podczas zmiany hasła.';
+  } finally {
+    isLoading.value = false;
+  }
   
 };
 </script>
