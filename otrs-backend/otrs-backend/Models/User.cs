@@ -17,6 +17,9 @@ namespace otrs_backend.Models
         [Required]
         public string PasswordHash { get; set; }
 
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+
         public ICollection<Role> Roles { get; set; } = new List<Role>();
         public ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();
         public ICollection<Ticket> CreatedTickets { get; set; } = new List<Ticket>();

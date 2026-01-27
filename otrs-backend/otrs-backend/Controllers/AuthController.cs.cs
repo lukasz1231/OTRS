@@ -72,5 +72,26 @@ namespace otrs_backend.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.PasswordResetToken == request.Token);
+
+            if (user == null || user.PasswordResetTokenExpiry < DateTime.Now)
+            {
+                return BadRequest("Token jest nieprawidłowy lub wygasł.");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Hasło zostało pomyślnie zmienione." });
+        }
     }
 }
