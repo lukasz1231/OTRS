@@ -26,7 +26,10 @@ namespace otrs_backend.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login([FromBody] LoginRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            // ZMIANA: Dodano .Include(u => u.Roles), aby pobrać też role użytkownika
+            var user = await _context.Users
+                .Include(u => u.Roles) 
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user == null)
             {
@@ -51,6 +54,12 @@ namespace otrs_backend.Controllers
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, $"{user.Name} {user.Surname}")
             };
+
+            // ZMIANA: Pętla dodająca każdą rolę użytkownika do Tokena
+            foreach (var role in user.Roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role.Name));
+            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtSettings:SecretKey").Value!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
