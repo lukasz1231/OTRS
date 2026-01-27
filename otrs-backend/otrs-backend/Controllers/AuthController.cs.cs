@@ -33,7 +33,7 @@ namespace otrs_backend.Controllers
                 return BadRequest("Nie znaleziono użytkownika.");
             }
 
-            if (user.PasswordHash != request.Password)
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return BadRequest("Błędne hasło.");
             }
