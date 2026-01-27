@@ -170,12 +170,38 @@ const handleSubmit = async () => {
   }
 
   isLoading.value = true;
-  
-  console.log(`Wysyłanie formularza dla trybu: ${activeTab.value}`, formData);
-  
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  isLoading.value = false;
+  errorMessage.value = '';
+
+  try {
+    const backendUrl = 'https://localhost:7054/api/Auth/login'; 
+
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(typeof data === 'string' ? data : (data.title || 'Błąd logowania'));
+    }
+
+    console.log(data);
+    localStorage.setItem('token', data.token);
+    alert("Zalogowano pomyślnie!");
+
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = error.message;
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
