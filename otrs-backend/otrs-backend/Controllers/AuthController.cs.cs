@@ -73,6 +73,46 @@ namespace otrs_backend.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        [HttpPost("register")]
+        public async Task<ActionResult<string>> Register([FromBody] RegisterRequest request)
+        {
+            if (await _context.Users.AnyAsync(u => u.Email == request.Email))
+            {
+                return BadRequest("Użytkownik o podanym adresie email już istnieje.");
+            }
+
+            var names = request.Fullname.Split(' ', 2);
+            string name = names[0];
+            string surname = names.Length > 1 ? names[1] : "";
+
+            var user = new User
+            {
+                Name = name,
+                Surname = surname,
+                Email = request.Email,
+                Bio = "",
+                AvatarUrl = "",
+                BirthDate = DateTime.Now,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+            };
+
+            var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            if (userRole == null)
+            {
+                userRole = new Role { Name = "User", Description = "Domyślna rola użytkownika" };
+                _context.Roles.Add(userRole);
+            }
+
+            user.Roles.Add(userRole);
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            string token = CreateToken(user);
+
+            return Ok(new { token });
+        }
+
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {

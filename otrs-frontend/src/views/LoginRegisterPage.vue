@@ -173,17 +173,27 @@ const handleSubmit = async () => {
   errorMessage.value = '';
 
   try {
-    const backendUrl = 'https://localhost:7054/api/Auth/login'; 
+    let backendUrl = '/api/Auth/login';
+    let body = {
+      email: formData.email,
+      password: formData.password
+    };
+
+    if (activeTab.value === 'register') {
+      backendUrl = '/api/Auth/register';
+      body = {
+        fullname: formData.fullname,
+        email: formData.email,
+        password: formData.password
+      };
+    }
 
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password
-      })
+      body: JSON.stringify(body)
     });
 
     const data = await response.json();
@@ -192,9 +202,8 @@ const handleSubmit = async () => {
       throw new Error(typeof data === 'string' ? data : (data.title || 'Błąd logowania'));
     }
 
-    console.log(data);
     localStorage.setItem('token', data.token);
-    alert("Zalogowano pomyślnie!");
+    alert(activeTab.value === 'login' ? "Zalogowano pomyślnie!" : "Zarejestrowano pomyślnie!");
 
   } catch (error) {
     console.error(error);
