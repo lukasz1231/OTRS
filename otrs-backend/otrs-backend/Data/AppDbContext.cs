@@ -18,6 +18,7 @@ namespace otrs_backend.Data
         public DbSet<Category> Categories => Set<Category>();
         public DbSet<Priority> Priorities => Set<Priority>();
         public DbSet<Que> Ques => Set<Que>();
+        public DbSet<Models.Type> Types => Set<Models.Type>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +45,19 @@ namespace otrs_backend.Data
                 .HasForeignKey(t => t.CreatorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Ticket → Type 
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.Type)
+                .WithMany()
+                .HasForeignKey(t => t.TypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Ticket → Queue 
+            modelBuilder.Entity<Ticket>()
+                .HasOne(t => t.Queue)
+                .WithMany()
+                .HasForeignKey(t => t.QueueId)
+                .OnDelete(DeleteBehavior.Restrict);
             // Ticket ↔ AssignedUsers
             modelBuilder.Entity<Ticket>()
                 .HasMany(t => t.AssignedUsers)

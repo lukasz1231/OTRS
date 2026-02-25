@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Sqlite;
 using Microsoft.IdentityModel.Tokens;
 using otrs_backend.Data;
+using otrs_backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,10 @@ builder.Services.AddCors(options =>
                   .AllowAnyMethod();
         });
 });
+
+// Services
+builder.Services.AddScoped<TicketService>();
+
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
