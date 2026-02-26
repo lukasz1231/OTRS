@@ -122,7 +122,7 @@ namespace otrs_backend.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
             {
-                return Ok("Jeśli e-mail istnieje w bazie, wysłano link do resetu hasła.");
+                return Ok(new { message = "Jeśli e-mail istnieje w bazie, wysłano link do resetu hasła." });
             }
 
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
@@ -214,7 +214,7 @@ namespace otrs_backend.Controllers
 
             await _smtpClient.SendMailAsync(mailMessage);
 
-            return Ok("Jeśli e-mail istnieje w bazie, wysłano link do resetu hasła.");
+            return Ok(new { message = "Jeśli e-mail istnieje w bazie, wysłano link do resetu hasła.", devResetLink = resetLink });
         }
 
         [HttpPost("reset-password")]
