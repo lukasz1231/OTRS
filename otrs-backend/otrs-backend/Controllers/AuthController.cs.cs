@@ -5,7 +5,9 @@ using otrs_backend.Data;
 using otrs_backend.Models;
 using otrs_backend.Requests;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace otrs_backend.Controllers
@@ -16,11 +18,13 @@ namespace otrs_backend.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly SmtpClient _smtpClient;
 
-        public AuthController(AppDbContext context, IConfiguration configuration)
+        public AuthController(AppDbContext context, IConfiguration configuration, SmtpClient smtpClient)
         {
             _context = context;
             _configuration = configuration;
+            _smtpClient = smtpClient;
         }
 
         [HttpPost("login")]
@@ -112,26 +116,127 @@ namespace otrs_backend.Controllers
 
             return Ok(new { token });
         }
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+            {
+                return Ok("Jeśli e-mail istnieje w bazie, wysłano link do resetu hasła.");
+            }
+
+            var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            user.PasswordResetToken = token;
+            user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+
+            await _context.SaveChangesAsync();
+
+            var resetLink = $"http://localhost:5173/reset-password?token={token}";
+            Console.WriteLine($"Link do resetu hasła (mail na Mailtrap): {resetLink}");
+
+            var mailMessage = new System.Net.Mail.MailMessage
+            {
+                From = new System.Net.Mail.MailAddress("no-reply@otrs-hustle.com", "OTRS System"),
+                Subject = "OTRS - Resetowanie Hasła"
+            };
+
+            var bodyStr = @"
+                <!DOCTYPE html>
+                <html lang=""pl"">
+                <head>
+                    <meta charset=""UTF-8"">
+                    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+                    <title>Reset hasła - OTRS</title>
+                </head>
+                <body style=""margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F0F2F4; color: #313D40;"">
+                    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" border=""0"" style=""background-color: #F0F2F4; padding: 40px 0;"">
+                        <tr>
+                            <td align=""center"">
+                                <table width=""600"" cellpadding=""0"" cellspacing=""0"" border=""0"" style=""background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);"">
+                                    <!-- Header -->
+                                    <tr>
+                                        <td align=""center"" style=""background-color: #3365A6; padding: 30px 0;"">
+                                            <img src=""cid:logo"" alt=""OTRS Logo"" style=""max-height: 80px; display: block;"">
+                                        </td>
+                                    </tr>
+                                    <!-- Content -->
+                                    <tr>
+                                        <td style=""padding: 40px 30px;"">
+                                            <h2 style=""margin-top: 0; color: #313D40; font-size: 24px;"">Zresetuj swoje hasło</h2>
+                                            <p style=""font-size: 16px; line-height: 1.6; color: #7D7E8C;"">Witaj <strong>{userName}</strong>,</p>
+                                            <p style=""font-size: 16px; line-height: 1.6; color: #7D7E8C;"">Otrzymaliśmy prośbę o zresetowanie hasła dla Twojego konta.</p>
+                                            <p style=""font-size: 16px; line-height: 1.6; color: #7D7E8C;"">Jeśli to nie Ty składałeś/-aś tę prośbę, zignoruj tę wiadomość.</p>
+                                            <p style=""font-size: 16px; line-height: 1.6; color: #7D7E8C;"">Kliknij przycisk poniżej, aby ustawić nowe hasło (link jest ważny przez 1 godzinę):</p>
+                                            
+                                            <!-- Button -->
+                                            <table width=""100%"" border=""0"" cellspacing=""0"" cellpadding=""0"" style=""margin: 30px 0;"">
+                                                <tr>
+                                                    <td align=""center"">
+                                                        <a href=""{resetLink}"" style=""background-color: #3365A6; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold; display: inline-block;"">Zresetuj hasło</a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+
+                                            <p style=""font-size: 14px; line-height: 1.5; color: #7D7E8C; border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;"">
+                                                Jeśli przycisk nie działa, skopiuj i wklej ten link do przeglądarki:<br>
+                                                <a href=""{resetLink}"" style=""color: #3365A6; word-break: break-all;"">{resetLink}</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td align=""center"" style=""background-color: #F0F2F4; padding: 20px; font-size: 12px; color: #7392A7;"">
+                                            <p style=""margin: 0;"">&copy; {year} OTRS System. Wszelkie prawa zastrzeżone.</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>"
+                .Replace("{userName}", user.Name)
+                .Replace("{resetLink}", resetLink)
+                .Replace("{year}", DateTime.UtcNow.Year.ToString());
+
+            var htmlView = System.Net.Mail.AlternateView.CreateAlternateViewFromString(bodyStr, null, "text/html");
+
+            var logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "HustleTrackLogo.png");
+            if (System.IO.File.Exists(logoPath))
+            {
+                var logo = new System.Net.Mail.LinkedResource(logoPath, "image/png");
+                logo.ContentId = "logo";
+                htmlView.LinkedResources.Add(logo);
+            }
+
+            mailMessage.AlternateViews.Add(htmlView);
+            mailMessage.To.Add(user.Email);
+
+            await _smtpClient.SendMailAsync(mailMessage);
+
+            return Ok("Jeśli e-mail istnieje w bazie, wysłano link do resetu hasła.");
+        }
 
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.PasswordResetToken == request.Token);
+            var user = await _context.Users.FirstOrDefaultAsync(u => 
+                u.PasswordResetToken == request.Token && 
+                u.PasswordResetTokenExpiry > DateTime.UtcNow);
 
-            if (user == null || user.PasswordResetTokenExpiry < DateTime.Now)
+            if (user == null)
             {
                 return BadRequest("Token jest nieprawidłowy lub wygasł.");
             }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-
+            
             user.PasswordResetToken = null;
             user.PasswordResetTokenExpiry = null;
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Hasło zostało pomyślnie zmienione." });
+            return Ok("Hasło zostało pomyślnie zmienione.");
         }
     }
 }

@@ -1,15 +1,28 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Sqlite;
 using Microsoft.IdentityModel.Tokens;
 using otrs_backend.Data;
 using otrs_backend.Services;
+
+DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddTransient<System.Net.Mail.SmtpClient>(sp =>
+{
+    return new System.Net.Mail.SmtpClient(Environment.GetEnvironmentVariable("MAILTRAP_HOST")!)
+    {
+        Port = int.Parse(Environment.GetEnvironmentVariable("MAILTRAP_PORT")!),
+        Credentials = new System.Net.NetworkCredential(
+            Environment.GetEnvironmentVariable("MAILTRAP_USERNAME"), 
+            Environment.GetEnvironmentVariable("MAILTRAP_PASSWORD")),
+        EnableSsl = true
+    };
+});
 
 builder.Services.AddAuthentication(options =>
 {
