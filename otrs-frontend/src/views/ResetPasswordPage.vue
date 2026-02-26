@@ -6,13 +6,29 @@
       <div class="flex flex-col items-center mb-8">
         <img src="../assets/HustleTrackLogo 1.png" alt="HustleTrack Logo" class="max-h-30 mb-4">
         
-        <h2 class="text-xl font-bold text-tekstSzaryCiemny mb-2">Ustaw nowe hasło</h2>
-        <p class="text-sm text-tekstSzary text-center">
-          Wprowadź nowe hasło do swojego konta
+        <h2 class="text-xl font-bold text-tekstSzaryCiemny mb-2">
+          {{ isSuccess ? 'Hasło zostało zmienione' : 'Ustaw nowe hasło' }}
+        </h2>
+        <p class="text-sm text-center" :class="isSuccess ? 'text-green-600 font-medium' : 'text-tekstSzary'">
+          {{ isSuccess ? 'Twoje hasło zostało pomyślnie zaktualizowane. Możesz teraz wrócić do strony logowania i zalogować się na swoje konto.' : 'Wprowadź nowe hasło do swojego konta' }}
         </p>
       </div>
 
-      <form class="flex flex-col" @submit.prevent="handleSubmit">
+      <div v-if="isSuccess" class="flex flex-col items-center justify-center">
+        <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8 text-green-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        </div>
+        <button 
+          @click="router.push('/login')" 
+          class="w-full bg-przyciskiNiebieski hover:opacity-90 text-white font-semibold py-3 rounded-lg transition-colors shadow-sm flex justify-center items-center cursor-pointer"
+        >
+          Powrót do logowania
+        </button>
+      </div>
+
+      <form v-else class="flex flex-col" @submit.prevent="handleSubmit">
         
         <div class="pb-5 flex flex-col space-y-1.5">
           <label for="password" class="text-sm font-semibold text-tekstSzaryCiemny">Hasło</label>
@@ -72,16 +88,17 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 
 const router = useRouter();
-const route = useRoute()
+const route = useRoute();
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 const isLoading = ref(false);
+const isSuccess = ref(false);
 const errorMessage = ref('');
-const token = ref('')
+const token = ref('');
 
 const formData = reactive({
   password: '',
@@ -114,13 +131,15 @@ const handleSubmit = async () => {
   isLoading.value = true;
   
   try {
-    await axios.post('https://localhost:7054/api/auth/reset-password', {
+    await axios.post('/api/Auth/reset-password', {
       newPassword: formData.password,
       token: token.value
     });
-    router.push('/login');
+    
+    isSuccess.value = true;
+    
   } catch (error) {
-    errorMessage.value = 'Wystąpił błąd podczas zmiany hasła.';
+    errorMessage.value = error.response?.data || 'Wystąpił błąd podczas zmiany hasła.';
   } finally {
     isLoading.value = false;
   }

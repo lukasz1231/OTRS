@@ -6,15 +6,26 @@
       <div class="flex flex-col items-center mb-8">
         <img src="../assets/HustleTrackLogo 1.png" alt="HustleTrack Logo" class="max-h-30 mb-4">
         
-        <h2 class="text-xl font-bold text-tekstSzaryCiemny mb-2">Zapomniałeś hasła?</h2>
-        <p class="text-sm text-tekstSzary text-center">
-          Wprowadź swój adres email, a wyślemy Ci link do resetowania hasła
+        <h2 class="text-xl font-bold text-tekstSzaryCiemny mb-2">
+          {{ isSuccess ? 'Link wysłany' : 'Zapomniałeś hasła?' }}
+        </h2>
+        <p class="text-sm text-center" :class="isSuccess ? 'text-green-600 font-medium' : 'text-tekstSzary'">
+          {{ isSuccess ? 'Jeżeli podany email istnieje w naszej bazie, wysłaliśmy na niego instrukcje resetowania hasła.' : 'Wprowadź swój adres email, a wyślemy Ci link do resetowania hasła' }}
         </p>
       </div>
 
-      <form class="flex flex-col" @submit.prevent="handleSubmit">
+      <div v-if="isSuccess" class="flex flex-col items-center justify-center">
+        <button 
+          @click="goBack" 
+          class="w-full bg-przyciskiNiebieski hover:opacity-90 text-white font-semibold py-3 rounded-lg transition-colors shadow-sm flex justify-center items-center cursor-pointer"
+        >
+          Powrót do logowania
+        </button>
+      </div>
+
+      <form v-else class="flex flex-col" @submit.prevent="handleSubmit">
         
-        <div class="pb-6 flex flex-col space-y-1.5">
+        <div class="pb-1 flex flex-col space-y-1.5">
           <label for="email" class="text-sm font-semibold text-tekstSzaryCiemny">Adres email</label>
           <input 
             type="email" 
@@ -24,6 +35,12 @@
             class="w-full border border-tekstSzary/20 rounded-lg px-4 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
             required
           />
+        </div>
+        
+        <div class="h-6 mb-2">
+            <p v-if="errorMessage" class="text-red-500 text-sm">
+              {{ errorMessage }}
+            </p>
         </div>
 
         <button 
@@ -58,6 +75,8 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const isLoading = ref(false);
+const isSuccess = ref(false);
+const errorMessage = ref('');
 
 const formData = reactive({
   email: '',
@@ -69,12 +88,28 @@ const goBack = () => {
 
 const handleSubmit = async () => {
   isLoading.value = true;
+  errorMessage.value = '';
   
-  console.log(`Wysyłanie linku resetującego na adres: ${email.value}`);
-  
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  isLoading.value = false;
-  
+  try {
+    const response = await fetch('/api/Auth/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email: formData.email })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(errorData || "Wystąpił błąd podczas wysyłania linku.");
+    }
+
+    isSuccess.value = true;
+  } catch (error) {
+    console.error(error);
+    errorMessage.value = error.message;
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
