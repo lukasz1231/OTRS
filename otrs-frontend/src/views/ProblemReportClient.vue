@@ -122,7 +122,6 @@ const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
-// Dane testowe (placeholder) - usunięto Klientów i Kolejki
 const types = ref([
   { id: 1, name: 'Incydent' },
   { id: 2, name: 'Wniosek o usługę' }
@@ -150,9 +149,6 @@ const submitTicket = async () => {
       TypeId: Number(form.typeId),
       PriorityId: Number(form.priorityId),
       CategoryId: Number(form.categoryId),
-      // UWAGA: Jeśli Twój C# wciąż wymaga Client i QueueId, odkomentuj i wpisz domyślne dane:
-      // Client: "Zalogowany Użytkownik",
-      // QueueId: 1 
     }
 
     const token = localStorage.getItem('token') || '' 
