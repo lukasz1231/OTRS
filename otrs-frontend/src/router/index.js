@@ -4,6 +4,7 @@ import ForgotPasswordPage from '@/views/ForgotPasswordPage.vue'
 import ResetPasswordPage from '@/views/ResetPasswordPage.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import ProblemReportHelpdesk from '@/views/ProblemReportHelpdesk.vue'
+import ProblemReportClient from '@/views/ProblemReportClient.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,6 +38,11 @@ const router = createRouter({
       path: '/problemReportHelpdesk',
       name: 'problemReportHelpdesk',
       component: ProblemReportHelpdesk,
+    },
+    {
+      path: '/problemReportClient',
+      name: 'problemReportClient',
+      component: ProblemReportClient,
     },
   ],
 })
