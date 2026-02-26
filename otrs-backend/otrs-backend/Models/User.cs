@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace otrs_backend.Models
-{+
+{
     public class User
     {
         [Key]
