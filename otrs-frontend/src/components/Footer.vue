@@ -19,7 +19,7 @@
           Użytkownik
         </h3>
         <ul class="space-y-4 text-gray-400 text-sm font-medium md:text-left whitespace-nowrap">
-          <li><a href="#" class="hover:text-white transition">Moje konto</a></li>
+          <li><router-link :to="{ name: 'profile' }" class="hover:text-white transition">Moje konto</router-link></li>
           <li><a href="#" class="hover:text-white transition">Centrum pomocy</a></li>
           <li><a href="#" class="hover:text-white transition">Dokumentacja API</a></li>
         </ul>
@@ -31,8 +31,8 @@
             Firma
           </h3>
           <ul class="space-y-4 text-gray-400 text-sm font-medium text-center md:text-left whitespace-nowrap">
-            <li><a href="#" class="hover:text-white transition">O nas</a></li>
-            <li><a href="#" class="hover:text-white transition">Kontakt</a></li>
+            <li><router-link :to="{ name: 'about' }" class="hover:text-white transition">O nas</router-link></li>
+            <li><router-link :to="{ name: 'contact' }" class="hover:text-white transition">Kontakt</router-link></li>
             <li><a href="#" class="hover:text-white transition">Partnerzy</a></li>
           </ul>
         </div>
@@ -43,9 +43,9 @@
     <div class="max-w-7xl mx-auto">
       <div class="bg-[#E9ECEF] text-[#495057] py-4 px-8 rounded-xl flex flex-col md:flex-row justify-between items-center text-[13px] font-semibold">
         <div class="flex flex-wrap justify-center gap-x-8 gap-y-2 mb-4 md:mb-0">
-          <a href="#" class="hover:text-black transition">Ochrona prywatności</a>
-          <a href="#" class="hover:text-black transition">Zasady użytkowania</a>
-          <a href="#" class="hover:text-black transition">Znaki towarowe</a>
+          <router-link :to="{ name: 'privacy'}" class="hover:text-black transition cursor-pointer">Ochrona prywatności</router-link>
+          <router-link :to="{ name: 'terms'}" class="hover:text-black transition cursor-pointer">Zasady uzytkowania</router-link>
+          <router-link :to="{ name: 'trademark'}" class="hover:text-black transition cursor-pointer">Znaki Towarowe</router-link>
         </div>
         <div class="whitespace-nowrap opacity-90">
           © Hustletrack ITSM 2025

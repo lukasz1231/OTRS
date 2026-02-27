@@ -3,13 +3,16 @@
     <div class="max-w-6xl mx-auto px-6 py-4 md:flex md:items-center">
       
       <div class="flex items-center justify-between w-full md:w-auto">
-        <div class="text-2xl font-bold text-przyciskiNiebieski tracking-tight cursor-pointer whitespace-nowrap">
+        <div 
+          @click="router.push({ name: 'dashboard' })"
+          class="text-2xl font-bold text-przyciskiNiebieski tracking-tight cursor-pointer whitespace-nowrap"
+        >
           Hustletrack ITSM
         </div>
 
         <button 
           @click="toggleMenu" 
-          class="md:hidden text-tekstSzary hover:text-tekstSzaryCiemny p-1 focus:outline-none"
+          class="md:hidden text-tekstSzary hover:text-tekstSzaryCiemny p-1 focus:outline-none cursor-pointer"
         >
           <svg v-if="!isOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
           <svg v-else xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -32,10 +35,10 @@
             :key="item.id"
             @click="handleNavigation(item.id)"
             :class="[
-              'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded transition-all duration-200 w-full md:w-auto',
+              'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded transition-all duration-200 w-full md:w-auto cursor-pointer',
               activeTab === item.id 
                 ? 'bg-przyciskiNiebieski text-white shadow-sm' 
-                : 'text-tekstSzary hover:text-tekstSzaryCiemny'
+                : 'text-tekstSzary hover:text-tekstSzaryCiemny hover:bg-gray-100'
             ]"
           >
             <component :is="item.icon" />
@@ -43,15 +46,25 @@
           </button>
         </div>
 
-        <div class="border-t border-gray-300 my-4 md:hidden"></div>
+        <div class="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
+          <div class="border-t border-gray-300 w-full md:hidden my-2"></div>
+          
+          <button 
+            @click="goToProfile"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-tekstSzary hover:text-przyciskiNiebieski transition-all duration-200 w-full md:w-auto cursor-pointer"
+          >
+            <IconUser />
+            <span>Moje konto</span>
+          </button>
 
-        <button 
-          @click="handleLogout"
-          class="flex items-center justify-center w-full md:w-auto p-1.5 text-tekstSzary bg-white border border-placeholder rounded hover:bg-gray-200 hover:text-tekstSzaryCiemny transition-colors gap-2"
-        >
-          <IconLogout />
-          <span class="md:hidden text-sm font-medium">Wyloguj się</span>
-        </button>
+          <button 
+            @click="handleLogout"
+            class="flex items-center justify-center w-full md:w-auto p-1.5 text-tekstSzary bg-white border border-placeholder rounded hover:bg-gray-100 hover:text-red-500 transition-colors gap-2 cursor-pointer"
+          >
+            <IconLogout />
+            <span class="md:hidden text-sm font-medium">Wyloguj się</span>
+          </button>
+        </div>
       </div>
 
     </div>
@@ -60,9 +73,14 @@
 
 <script setup>
 import { ref, h } from 'vue';
+import { useRouter } from 'vue-router';
 
-const IconDashboard = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"18", height:"18", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" }), h('path', { d: "M13 5v2" }), h('path', { d: "M13 17v2" }), h('path', { d: "M13 11v2" })]);
+const router = useRouter();
+
+// Ikony
+const IconDashboard = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"18", height:"18", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" }), h('polyline', { points: "9 22 9 12 15 12 15 22" })]);
 const IconLogout = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"20", height:"20", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" }), h('polyline', { points: "16 17 21 12 16 7" }), h('line', { x1: "21", x2: "9", y1: "12", y2: "12" })]);
+const IconUser = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"20", height:"20", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" }), h('circle', { cx: "12", cy: "7", r: "4" })]);
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
@@ -79,11 +97,18 @@ const toggleMenu = () => {
 const handleNavigation = (id) => {
   activeTab.value = id;
   isOpen.value = false;
-  console.log(`Przełączono na zakładkę: ${id}`);
+  router.push({ name: id });
+};
+
+const goToProfile = () => {
+  isOpen.value = false;
+  activeTab.value = 'profile';
+  router.push({ name: 'profile' }); 
 };
 
 const handleLogout = () => {
   isOpen.value = false;
   console.log('Wylogowano użytkownika');
+  router.push({ name: 'login' });
 };
 </script>
