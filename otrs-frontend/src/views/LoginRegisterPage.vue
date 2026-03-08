@@ -196,10 +196,12 @@ const handleSubmit = async () => {
       body: JSON.stringify(body)
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+    const data = isJson ? await response.json() : await response.text();
 
     if (!response.ok) {
-      throw new Error(typeof data === 'string' ? data : (data.title || 'Błąd logowania'));
+      throw new Error(typeof data === 'string' ? data : (data.title || data.message || 'Błąd logowania'));
     }
 
     localStorage.setItem('token', data.token);

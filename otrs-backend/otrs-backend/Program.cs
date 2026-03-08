@@ -14,14 +14,30 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddTransient<System.Net.Mail.SmtpClient>(sp =>
 {
-    return new System.Net.Mail.SmtpClient(Environment.GetEnvironmentVariable("MAILTRAP_HOST")!)
+    var host = Environment.GetEnvironmentVariable("MAILTRAP_HOST");
+    var portRaw = Environment.GetEnvironmentVariable("MAILTRAP_PORT");
+    var username = Environment.GetEnvironmentVariable("MAILTRAP_USERNAME");
+    var password = Environment.GetEnvironmentVariable("MAILTRAP_PASSWORD");
+
+    var port = 2525;
+    if (!string.IsNullOrWhiteSpace(portRaw) && int.TryParse(portRaw, out var parsedPort))
     {
-        Port = int.Parse(Environment.GetEnvironmentVariable("MAILTRAP_PORT")!),
-        Credentials = new System.Net.NetworkCredential(
-            Environment.GetEnvironmentVariable("MAILTRAP_USERNAME"), 
-            Environment.GetEnvironmentVariable("MAILTRAP_PASSWORD")),
+        port = parsedPort;
+    }
+
+    var smtpClient = new System.Net.Mail.SmtpClient(
+        string.IsNullOrWhiteSpace(host) ? "localhost" : host)
+    {
+        Port = port,
         EnableSsl = true
     };
+
+    if (!string.IsNullOrWhiteSpace(username) && !string.IsNullOrWhiteSpace(password))
+    {
+        smtpClient.Credentials = new System.Net.NetworkCredential(username, password);
+    }
+
+    return smtpClient;
 });
 
 builder.Services.AddAuthentication(options =>
