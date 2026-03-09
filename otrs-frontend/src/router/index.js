@@ -16,13 +16,10 @@ import ContactPage from '@/views/ContactPage.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   
-  // kontrola przewijania - scroll na gore strony lub powrot w to samo miejsce po przycisku wstecz
   scrollBehavior(to, from, savedPosition) {
-    // jesli wstecz to wroc
     if (savedPosition) {
       return savedPosition
     }
-    // jezeli nie to na sama gore
     return { top: 0, behavior: 'smooth' }
   },
 routes: [
@@ -30,41 +27,49 @@ routes: [
       path: '/login',
       name: 'login',
       component: LoginRegisterPage,
+      meta: { requiresGuest: true } 
     },
     {
       path: '/register',
       name: 'register',
       component: LoginRegisterPage,
+      meta: { requiresGuest: true } 
     },
     {
       path: '/forgot-password',
       name: 'forgot-password',
       component: ForgotPasswordPage,
+      meta: { requiresGuest: true } 
     },
     {
       path: '/reset-password',
       name: 'reset-password',
       component: ResetPasswordPage,
+      meta: { requiresGuest: true } 
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: Dashboard,
+      meta: { requiresAuth: true } 
     },
     {
       path: '/problemReportHelpdesk',
       name: 'problemReportHelpdesk',
       component: ProblemReportHelpdesk,
+      meta: { requiresAuth: true } 
     },
     {
       path: '/problemReportClient',
       name: 'problemReportClient',
       component: ProblemReportClient,
+      meta: { requiresAuth: true }
     },
     {
       path: '/profile',
       name: 'profile',
       component: ProfilePage,
+      meta: { requiresAuth: true }
     },
     {
       path: '/privacy',
@@ -91,9 +96,24 @@ routes: [
       name: 'contact',
       component: ContactPage,
     },
+    {
+      path: '/',
+      redirect: '/dashboard'
+    }
   ],
 })
 
-
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('token')
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next('/login')
+  } 
+  else if (to.meta.requiresGuest && isAuthenticated) {
+    next('/dashboard')
+  } 
+  else {
+    next()
+  }
+})
 
 export default router

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using otrs_backend.Requests;
 using otrs_backend.Services;
@@ -8,6 +9,7 @@ namespace otrs_backend.Controllers
 {
     [Route("api/ticket")]
     [ApiController]
+    [Authorize]
     public class CreateTicketController : ControllerBase
     {
         private readonly TicketService _ticketService;
@@ -43,6 +45,13 @@ namespace otrs_backend.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTicketById(int id)
         {
+            //POBRANIE ID UŻYTKOWNIKA - żeby sprawdzić czy ma dostęp do tego zgłoszenia
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
+            {
+                return Unauthorized("Nie można zidentyfikować użytkownika.");
+            }
             return Ok(new { id = id, message = "Endpoint w budowie" });
         }
     }

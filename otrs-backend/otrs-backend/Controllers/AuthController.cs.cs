@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using otrs_backend.Data;
@@ -237,6 +238,12 @@ namespace otrs_backend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok("Hasło zostało pomyślnie zmienione.");
+        }
+        [HttpPost("logout")]
+        [Authorize] // TYLKO dla zalogowanych
+        public IActionResult Logout()
+        {
+        return Ok(new { message = "Wylogowano pomyślnie" });
         }
     }
 }

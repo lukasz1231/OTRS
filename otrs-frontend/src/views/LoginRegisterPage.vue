@@ -203,7 +203,11 @@ const handleSubmit = async () => {
     }
 
     localStorage.setItem('token', data.token);
-    alert(activeTab.value === 'login' ? "Zalogowano pomyślnie!" : "Zarejestrowano pomyślnie!");
+
+    window.dispatchEvent(new CustomEvent('auth-change'));
+    window.dispatchEvent(new Event('storage'));
+    
+    router.push({ name: 'dashboard' });
 
   } catch (error) {
     console.error(error);
