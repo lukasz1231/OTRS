@@ -1,31 +1,30 @@
 <script setup>
 import { RouterView } from 'vue-router'
-import Navbar from './components/Navbar.vue';
-import Footer from './components/Footer.vue';
-import Notification from './components/Notification.vue';
-import { ref, provide } from 'vue';
+import Navbar from './components/Navbar.vue'
+import Footer from './components/Footer.vue'
+import Notification from './components/Notification.vue'
+import { ref, provide } from 'vue'
 
-const notifications = ref([]);
-let nextId = 1;
+const notifications = ref([])
+let nextId = 1
 
 const showNotification = (message, type = 'success') => {
-  const id = nextId++;
-  notifications.value.push({ id, message, type });
-};
+  const id = nextId++
+  notifications.value.push({ id, message, type })
+}
 
 const removeNotification = (id) => {
-  const index = notifications.value.findIndex(n => n.id === id);
+  const index = notifications.value.findIndex((n) => n.id === id)
   if (index > -1) {
-    notifications.value.splice(index, 1);
+    notifications.value.splice(index, 1)
   }
-};
+}
 
-provide('showNotification', showNotification);
+provide('showNotification', showNotification)
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen">
-    
     <div class="fixed top-4 right-4 z-50 space-y-2">
       <Notification
         v-for="notification in notifications"
@@ -43,7 +42,6 @@ provide('showNotification', showNotification);
     </main>
 
     <Footer />
-
   </div>
 </template>
 

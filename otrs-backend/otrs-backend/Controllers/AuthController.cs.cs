@@ -29,11 +29,10 @@ namespace otrs_backend.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult> Login([FromBody] LoginRequest request)
         {
-            // ZMIANA: Dodano .Include(u => u.Roles), aby pobrać też role użytkownika
             var user = await _context.Users
-                .Include(u => u.Roles) 
+                .Include(u => u.Roles)
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (user == null)
@@ -48,38 +47,22 @@ namespace otrs_backend.Controllers
 
             string token = CreateToken(user);
 
-            return Ok(new { token });
-        }
+            SetTokenCookie(token);
 
-        private string CreateToken(User user)
-        {
-            var claims = new List<Claim>
+            var userData = new
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, $"{user.Name} {user.Surname}")
+                user.Id,
+                user.Name,
+                user.Surname,
+                user.Email,
+                Roles = user.Roles.Select(r => r.Name).ToList()
             };
 
-            // ZMIANA: Pętla dodająca każdą rolę użytkownika do Tokena
-            foreach (var role in user.Roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role.Name));
-            }
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtSettings:SecretKey").Value!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddDays(1),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return Ok(new { user = userData });
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<string>> Register([FromBody] RegisterRequest request)
+        public async Task<ActionResult> Register([FromBody] RegisterRequest request)
         {
             if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             {
@@ -115,8 +98,13 @@ namespace otrs_backend.Controllers
 
             string token = CreateToken(user);
 
-            return Ok(new { token });
+            SetTokenCookie(token);
+
+            var userData = new { user.Id, user.Name, user.Surname, user.Email, Roles = new[] { "User" } };
+
+            return Ok(new { user = userData });
         }
+
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
@@ -221,8 +209,8 @@ namespace otrs_backend.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => 
-                u.PasswordResetToken == request.Token && 
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.PasswordResetToken == request.Token &&
                 u.PasswordResetTokenExpiry > DateTime.UtcNow);
 
             if (user == null)
@@ -231,7 +219,7 @@ namespace otrs_backend.Controllers
             }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-            
+
             user.PasswordResetToken = null;
             user.PasswordResetTokenExpiry = null;
 
@@ -271,10 +259,89 @@ namespace otrs_backend.Controllers
         }
 
         [HttpPost("logout")]
-        [Authorize] // TYLKO dla zalogowanych
+        [Authorize]
         public IActionResult Logout()
         {
-        return Ok(new { message = "Wylogowano pomyślnie" });
+            Response.Cookies.Delete("jwt", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None
+            });
+
+            return Ok(new { message = "Wylogowano pomyślnie" });
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int userId))
+            {
+                return Unauthorized(new { message = "Nieprawidłowy token." });
+            }
+
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+            {
+                return Unauthorized(new { message = "Użytkownik nie istnieje." });
+            }
+
+            var userData = new
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Surname = user.Surname,
+                Email = user.Email,
+                Roles = user.Roles.Select(r => r.Name).ToList()
+            };
+
+            return Ok(new { user = userData });
+        }
+
+        private string CreateToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, $"{user.Name} {user.Surname}")
+            };
+
+            // ZMIANA: Pętla dodająca każdą rolę użytkownika do Tokena
+            foreach (var role in user.Roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role.Name));
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtSettings:SecretKey").Value!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddDays(1),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private void SetTokenCookie(string token)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = DateTime.UtcNow.AddDays(1),
+                SameSite = SameSiteMode.None,
+                Secure = true
+            };
+
+            Response.Cookies.Append("jwt", token, cookieOptions);
         }
     }
 }

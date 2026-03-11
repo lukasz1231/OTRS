@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+
 import LoginRegisterPage from '@/views/LoginRegisterPage.vue'
 import ForgotPasswordPage from '@/views/ForgotPasswordPage.vue'
 import ResetPasswordPage from '@/views/ResetPasswordPage.vue'
@@ -123,29 +125,28 @@ routes: [
   ],
 })
 
-router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
-  
-  if (to.meta.requiresAuth && !token) {
-    return next('/login')
+
+router.beforeEach(async (to, from, next) => {
+  const userStore = useUserStore()
+
+  if (!userStore.isSessionChecked) {
+    await userStore.fetchCurrentUser()
   }
 
-  if (token) {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload["role"] || payload["roles"]
-      
-      const userRoles = Array.isArray(roles) ? roles : (roles ? [roles] : [])
-      
-      if (to.meta.requiresAdmin && !userRoles.includes('Admin')) {
-        return next('/dashboard')
-      }
-      
-    } catch (e) {
-      console.error('Błąd parsowania tokena:', e)
-    }
+  const isAuthenticated = userStore.isAuthenticated
+  const isAdmin = userStore.user?.roles?.includes('Admin') || false
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    return next({ name: 'login' })
   }
 
+  if (to.meta.requiresGuest && isAuthenticated) {
+    return next({ name: 'dashboard' })
+  }
+
+  if (to.meta.requiresAdmin && !isAdmin) {
+    return next({ name: 'dashboard' })
+  }
   next()
 })
 
