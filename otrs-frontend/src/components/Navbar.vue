@@ -236,27 +236,16 @@ const isAdmin = computed(() => {
 
 const menuItems = computed(() => {
   const items = [
-<<<<<<< HEAD
     { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
     { id: 'problemReportClient', label: 'Zgłoszenia', icon: IconTicket },
   ]
-=======
-    { id: 'dashboard', label: 'Dashboard', icon: IconDashboard }
-  ];
-  if (isHelpdesk.value || isAdmin.value) {
-    items.push({ id: 'problemReportHelpdesk', label: 'Panel zgłoszeń', icon: IconTicket });
-  } else {
-    items.push({ id: 'problemReportClient', label: 'Moje zgłoszenia', icon: IconTicket });
-  }
-  
->>>>>>> main
   if (isAdmin.value) {
     items.push({ id: 'admin', label: 'Admin', icon: IconAdmin })
   }
-<<<<<<< HEAD
   return items
 })
 
+// Śledzenie aktywnej zakładki
 watch(
   () => route.name,
   (newRouteName) => {
@@ -264,30 +253,6 @@ watch(
   },
   { immediate: true },
 )
-=======
-  
-  return items;
-});
-
-const isHelpdesk = computed(() => {
-  if (!userToken.value) return false;
-  try {
-    const payload = JSON.parse(atob(userToken.value.split('.')[1]));
-    const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload["role"] || payload["roles"];
-    
-    if (Array.isArray(roles)) {
-      return roles.includes('Helpdesk') || roles.includes('Admin');
-    }
-    return roles === 'Helpdesk' || roles === 'Admin';
-  } catch (e) { 
-    return false; 
-  }
-});
-
-watch(() => route.path, () => {
-  userToken.value = localStorage.getItem('token');
-}, { immediate: true });
->>>>>>> main
 
 const toggleMenu = () => {
   isOpen.value = !isOpen.value
