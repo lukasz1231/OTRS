@@ -37,12 +37,12 @@
             </div>
 
             <button 
-              @click="router.push({ name: 'problemReportClient' })"
-              class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-sm cursor-pointer active:scale-95"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-              Utwórz zgłoszenie
-            </button>
+            @click="goToCreateTicket"
+            class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-sm cursor-pointer active:scale-95"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            Utwórz zgłoszenie
+          </button>
           </div>
 
           <div class="flex flex-col md:flex-row gap-4 mb-8">
@@ -116,6 +116,27 @@ import { ref, h, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const hasHelpdeskAccess = computed(() => {
+  const token = localStorage.getItem('token');
+  if (!token) return false;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload["role"] || payload["roles"];
+    const rolesArray = Array.isArray(roles) ? roles : (roles ? [roles] : []);
+    return rolesArray.includes('Helpdesk') || rolesArray.includes('Admin');
+  } catch (e) {
+    return false;
+  }
+});
+
+const goToCreateTicket = () => {
+  if (hasHelpdeskAccess.value) {
+    router.push({ name: 'problemReportHelpdesk' });
+  } else {
+    router.push({ name: 'problemReportClient' });
+  }
+};
 
 // Reaktywne stany
 const searchQuery = ref('');
