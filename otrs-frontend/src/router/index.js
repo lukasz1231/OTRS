@@ -49,7 +49,6 @@ routes: [
       path: '/reset-password',
       name: 'reset-password',
       component: ResetPasswordPage,
-      meta: { requiresGuest: true } 
     },
     {
       path: '/dashboard',

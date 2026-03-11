@@ -25,7 +25,7 @@ provide('showNotification', showNotification)
 
 <template>
   <div class="flex flex-col min-h-screen">
-    <div class="fixed top-4 right-4 z-50 space-y-2">
+    <div class="fixed top-4 right-4 z-100 space-y-2">
       <Notification
         v-for="notification in notifications"
         :key="notification.id"
