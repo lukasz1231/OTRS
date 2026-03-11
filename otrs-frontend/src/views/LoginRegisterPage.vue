@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, inject } from 'vue';
+import { reactive, ref, computed, inject, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
@@ -154,7 +154,7 @@ const activeTab = computed(() => {
 });
 
 watch(activeTab, () => {
-  errorMessage.value = '';
+  globalError.value = '';
 });
 
 const showPassword = ref(false);
