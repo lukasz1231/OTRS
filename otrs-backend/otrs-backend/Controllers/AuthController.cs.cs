@@ -209,8 +209,8 @@ namespace otrs_backend.Controllers
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => 
-                u.PasswordResetToken == request.Token && 
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.PasswordResetToken == request.Token &&
                 u.PasswordResetTokenExpiry > DateTime.UtcNow);
 
             if (user == null)
@@ -219,7 +219,37 @@ namespace otrs_backend.Controllers
             }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-            
+
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiry = null;
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Hasło zostało pomyślnie zmienione.");
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized("Brak poprawnych danych użytkownika.");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                return Unauthorized("Użytkownik nie został znaleziony.");
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            {
+                return BadRequest("Aktualne hasło jest nieprawidłowe.");
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
             user.PasswordResetToken = null;
             user.PasswordResetTokenExpiry = null;
 
