@@ -120,6 +120,12 @@ routes: [
       name: 'admin-queues',
       component: AdminQueues,
       meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/ticket/:id',
+      name: 'ticket-details',
+      component: () => import('../views/TicketDetailsView.vue'),
+      props: true
     }
   ],
 })

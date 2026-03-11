@@ -10,11 +10,11 @@ namespace otrs_backend.Controllers
     [Route("api/ticket")]
     [ApiController]
     [Authorize]
-    public class CreateTicketController : ControllerBase
+    public class TicketController : ControllerBase
     {
         private readonly TicketService _ticketService;
 
-        public CreateTicketController(TicketService ticketService)
+        public TicketController(TicketService ticketService)
         {
             _ticketService = ticketService;
         }
@@ -22,7 +22,6 @@ namespace otrs_backend.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] CreateTicketRequest request)
         {
-            
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
@@ -33,7 +32,6 @@ namespace otrs_backend.Controllers
             try
             {
                 var ticket = await _ticketService.CreateTicketAsync(request, currentUserId);
-
                 return CreatedAtAction(nameof(GetTicketById), new { id = ticket.Id }, ticket);
             }
             catch (Exception ex)
@@ -45,14 +43,36 @@ namespace otrs_backend.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTicketById(int id)
         {
-            //POBRANIE ID UŻYTKOWNIKA - żeby sprawdzić czy ma dostęp do tego zgłoszenia
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
+
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
             {
                 return Unauthorized("Nie można zidentyfikować użytkownika.");
             }
             return Ok(new { id = id, message = "Endpoint w budowie" });
+        }
+
+        // NOWY ENDPOINT: Obsługa zapytania GET /api/ticket
+        [HttpGet]
+        public async Task<IActionResult> GetMyTickets()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
+            {
+                return Unauthorized("Nie można zidentyfikować użytkownika.");
+            }
+
+            try
+            {
+                // Odpytujemy nasz nowy, czysty serwis
+                var tickets = await _ticketService.GetMyTicketsAsync(currentUserId);
+                return Ok(tickets);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Wystąpił błąd podczas pobierania zgłoszeń", error = ex.Message });
+            }
         }
     }
 }
