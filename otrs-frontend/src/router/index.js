@@ -130,16 +130,19 @@ router.beforeEach((to, from, next) => {
     return next('/login')
   }
 
-  if (to.meta.requiresAdmin) {
-    // Proste wyciągnięcie roli z tokena (bez bibliotek)
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
-    
-    // Sprawdzamy czy role to tablica czy pojedynczy string i czy zawiera Admin
-    const isAdmin = Array.isArray(roles) ? roles.includes('Admin') : roles === 'Admin'
-    
-    if (!isAdmin) {
-      return next('/dashboard') // Brak uprawnień -> wykop na dashboard
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload["role"] || payload["roles"]
+      
+      const userRoles = Array.isArray(roles) ? roles : (roles ? [roles] : [])
+      
+      if (to.meta.requiresAdmin && !userRoles.includes('Admin')) {
+        return next('/dashboard')
+      }
+      
+    } catch (e) {
+      console.error('Błąd parsowania tokena:', e)
     }
   }
 

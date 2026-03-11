@@ -35,10 +35,13 @@
                 type="text" 
                 id="fullname" 
                 v-model="formData.fullname"
+                @input="validateFullname"
                 placeholder="Jan Kowalski" 
-                class="w-full border border-tekstSzary/20 rounded-lg px-4 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
+                class="w-full border rounded-lg px-4 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
+                :class="errors.fullname ? 'border-red-500' : 'border-tekstSzary/20'"
                 required
               />
+              <p v-if="errors.fullname" class="text-red-500 text-xs mt-1">{{ errors.fullname }}</p>
             </div>
           </div>
         </transition>
@@ -49,10 +52,13 @@
             type="email" 
             id="email" 
             v-model="formData.email"
+            @input="validateEmail"
             placeholder="jankowalski@example.pl" 
-            class="w-full border border-tekstSzary/20 rounded-lg px-4 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
+            class="w-full border rounded-lg px-4 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
+            :class="errors.email ? 'border-red-500' : 'border-tekstSzary/20'"
             required
           />
+          <p v-if="errors.email" class="text-red-500 text-xs mt-1">{{ errors.email }}</p>
         </div>
 
         <div class="pb-5 flex flex-col space-y-1.5">
@@ -62,8 +68,10 @@
               id="password" 
               :type="showPassword ? 'text' : 'password'"
               v-model="formData.password"
+              @input="validatePassword"
               placeholder="Hasło" 
-              class="w-full border border-tekstSzary/20 rounded-lg pl-4 pr-10 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
+              class="w-full border rounded-lg pl-4 pr-10 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
+              :class="errors.password ? 'border-red-500' : 'border-tekstSzary/20'"
               required
             />
             <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 flex items-center pr-3 text-tekstSzary hover:text-tekstSzaryCiemny focus:outline-none">
@@ -71,6 +79,7 @@
                <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg>
             </button>
           </div>
+          <p v-if="errors.password" class="text-red-500 text-xs mt-1">{{ errors.password }}</p>
         </div>
 
         <transition name="expand">
@@ -82,8 +91,10 @@
                   :type="showConfirmPassword ? 'text' : 'password'"
                   id="confirmPassword" 
                   v-model="formData.confirmPassword"
+                  @input="validateConfirmPassword"
                   placeholder="Powtórz hasło" 
-                  class="w-full border border-tekstSzary/20 rounded-lg pl-4 pr-10 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
+                  class="w-full border rounded-lg pl-4 pr-10 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
+                  :class="errors.confirmPassword ? 'border-red-500' : 'border-tekstSzary/20'"
                   required
                 />
                 <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute inset-y-0 right-0 flex items-center pr-3 text-tekstSzary hover:text-tekstSzaryCiemny focus:outline-none">
@@ -91,19 +102,24 @@
                   <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg>
                 </button>
               </div>
-                <p v-if="errorMessage" class="text-red-500 text-sm mt-1">
-                  {{ errorMessage }}
-                </p>
+                <p v-if="errors.confirmPassword" class="text-red-500 text-xs mt-1">{{ errors.confirmPassword }}</p>
             </div>
           </div>
         </transition>
 
+        <div v-if="globalError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p class="text-red-600 text-sm text-center">{{ globalError }}</p>
+        </div>
+
         <button 
           type="submit" 
-          :disabled="isLoading"
-          class="w-full bg-przyciskiNiebieski hover:opacity-90 text-white font-semibold py-3 rounded-lg transition-colors mt-2 shadow-sm flex justify-center items-center disabled:opacity-70 disabled:cursor-not-allowed"
+          :disabled="isLoading || !isFormValid"
+          class="w-full bg-przyciskiNiebieski hover:opacity-90 text-white font-semibold py-3 rounded-lg transition-colors mt-2 shadow-sm flex justify-center items-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
           <span v-if="!isLoading">{{ activeTab === 'login' ? 'Zaloguj się' : 'Zarejestruj się' }}</span>
           <span v-else>{{ activeTab === 'login' ? 'Logowanie...' : 'Rejestracja...' }}</span>
         </button>
@@ -126,11 +142,12 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed } from 'vue';
+import { reactive, ref, computed, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
+const showNotification = inject('showNotification');
 
 const activeTab = computed(() => {
   return route.name === 'register' ? 'register' : 'login';
@@ -139,7 +156,7 @@ const activeTab = computed(() => {
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 const isLoading = ref(false);
-const errorMessage = ref('');
+const globalError = ref('');
 
 const formData = reactive({
   fullname: '',
@@ -148,7 +165,80 @@ const formData = reactive({
   confirmPassword: ''
 });
 
+const errors = reactive({
+  fullname: '',
+  email: '',
+  password: '',
+  confirmPassword: ''
+});
+
+const validateFullname = () => {
+  if (activeTab.value === 'register') {
+    if (!formData.fullname.trim()) {
+      errors.fullname = 'Imię i nazwisko jest wymagane';
+    } else if (formData.fullname.trim().length < 3) {
+      errors.fullname = 'Imię i nazwisko musi mieć co najmniej 3 znaki';
+    } else {
+      errors.fullname = '';
+    }
+  }
+};
+
+const validateEmail = () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!formData.email) {
+    errors.email = 'Email jest wymagany';
+  } else if (!emailRegex.test(formData.email)) {
+    errors.email = 'Podaj poprawny adres email';
+  } else {
+    errors.email = '';
+  }
+};
+
+const validatePassword = () => {
+  if (!formData.password) {
+    errors.password = 'Hasło jest wymagane';
+  } else if (formData.password.length < 8) {
+    errors.password = 'Hasło musi mieć co najmniej 8 znaków';
+  } else {
+    errors.password = '';
+  }
+  
+  if (activeTab.value === 'register' && formData.confirmPassword) {
+    validateConfirmPassword();
+  }
+};
+
+const validateConfirmPassword = () => {
+  if (activeTab.value === 'register') {
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = 'Potwierdzenie hasła jest wymagane';
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Hasła nie są identyczne';
+    } else {
+      errors.confirmPassword = '';
+    }
+  }
+};
+
+const isFormValid = computed(() => {
+  validateEmail();
+  
+  if (!formData.email || errors.email) return false;
+  if (!formData.password || errors.password) return false;
+  
+  if (activeTab.value === 'register') {
+    validateFullname();
+    validateConfirmPassword();
+    return !errors.fullname && !errors.confirmPassword;
+  }
+  
+  return true;
+});
+
 const switchTab = (tabName) => {
+  Object.keys(errors).forEach(key => errors[key] = '');
+  globalError.value = '';
   router.push({ name: tabName });
 };
 
@@ -157,20 +247,21 @@ const goToResetPassword = () => {
 };
 
 const handleSubmit = async () => {
-  if(activeTab.value === "register") {
-    errorMessage.value = '';
-    if (formData.password !== formData.confirmPassword) {
-      errorMessage.value = 'Hasła nie są identyczne.';
-      return;
-    }
-    if (formData.password.length < 8) {
-      errorMessage.value = 'Hasło musi mieć co najmniej 8 znaków.';
-      return;
-    }
+  validateEmail();
+  validatePassword();
+  
+  if (activeTab.value === 'register') {
+    validateFullname();
+    validateConfirmPassword();
+  }
+  
+  const hasErrors = Object.values(errors).some(error => error);
+  if (hasErrors) {
+    return;
   }
 
   isLoading.value = true;
-  errorMessage.value = '';
+  globalError.value = '';
 
   try {
     let backendUrl = '/api/Auth/login';
@@ -196,24 +287,61 @@ const handleSubmit = async () => {
       body: JSON.stringify(body)
     });
 
+    let data;
     const contentType = response.headers.get('content-type') || '';
-    const isJson = contentType.includes('application/json');
-    const data = isJson ? await response.json() : await response.text();
+    
+    if (contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
 
     if (!response.ok) {
-      throw new Error(typeof data === 'string' ? data : (data.title || data.message || 'Błąd logowania'));
+      let errorMessage = 'Wystąpił błąd. Spróbuj ponownie.';
+      
+      if (typeof data === 'string') {
+        errorMessage = data;
+      } else if (data.title) {
+        errorMessage = data.title;
+      } else if (data.message) {
+        errorMessage = data.message;
+      } else if (data.errors) {
+        errorMessage = Object.values(data.errors).flat()[0];
+      }
+      
+      throw new Error(errorMessage);
     }
 
     localStorage.setItem('token', data.token);
 
+    showNotification(
+      activeTab.value === 'login' ? 'Zalogowano pomyślnie!' : 'Konto utworzone pomyślnie!',
+      'success'
+    );
+
     window.dispatchEvent(new CustomEvent('auth-change'));
     window.dispatchEvent(new Event('storage'));
-    
+
     router.push({ name: 'dashboard' });
+    try {
+      const payload = JSON.parse(atob(data.token.split('.')[1]));
+      const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload["role"] || payload["roles"];
+      const userRoles = Array.isArray(roles) ? roles : (roles ? [roles] : []);
+      
+      if (userRoles.includes('Helpdesk') || userRoles.includes('Admin')) {
+        router.push({ name: 'problemReportHelpdesk' });
+      } else {
+        router.push({ name: 'problemReportClient' });
+      }
+    } catch (e) {
+      console.error('Błąd parsowania tokena:', e);
+      router.push({ name: 'problemReportClient' });
+    }
 
   } catch (error) {
-    console.error(error);
-    errorMessage.value = error.message;
+    console.error('Błąd:', error);
+    globalError.value = error.message;
+    showNotification(error.message, 'error');
   } finally {
     isLoading.value = false;
   }
