@@ -98,6 +98,14 @@ namespace otrs_backend.Data
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // User ↔ Que (Wiele-do-Wielu)
+            // Ta konfiguracja pozwala jednemu użytkownikowi należeć do wielu kolejek jednocześnie
+            // Relacja Wiele-do-Wielu: Użytkownicy <-> Kolejki
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Ques)
+                .WithMany(q => q.Users)
+                .UsingEntity(j => j.ToTable("UserQueues")); // Ta tabela zostanie stworzona w SQLite
         }
     }
 }

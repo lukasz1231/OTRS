@@ -21,6 +21,7 @@ namespace otrs_backend.Models
         public DateTime? PasswordResetTokenExpiry { get; set; }
 
         public ICollection<Role> Roles { get; set; } = new List<Role>();
+        public ICollection<Que> Ques { get; set; } = new List<Que>();
         public ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();
         public ICollection<Ticket> CreatedTickets { get; set; } = new List<Ticket>();
     }

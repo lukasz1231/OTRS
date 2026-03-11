@@ -11,7 +11,9 @@ import TermsPage from '@/views/TermsPage.vue'
 import TrademarksPage from '@/views/TrademarksPage.vue'
 import AboutPage from '@/views/AboutPage.vue'
 import ContactPage from '@/views/ContactPage.vue'
-
+import AdminUsers from '@/views/AdminUsers.vue'
+import AdminDashboard from '@/views/AdminDashboard.vue'
+import AdminQueues from '@/views/AdminQueues.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -99,21 +101,49 @@ routes: [
     {
       path: '/',
       redirect: '/dashboard'
+    },
+   {
+      path: '/admin',
+      name: 'admin',
+      component: AdminDashboard,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: AdminUsers,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/admin/queues',
+      name: 'admin-queues',
+      component: AdminQueues,
+      meta: { requiresAuth: true, requiresAdmin: true }
     }
   ],
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('token')
-  if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
-  } 
-  else if (to.meta.requiresGuest && isAuthenticated) {
-    next('/dashboard')
-  } 
-  else {
-    next()
+  const token = localStorage.getItem('token')
+  
+  if (to.meta.requiresAuth && !token) {
+    return next('/login')
   }
+
+  if (to.meta.requiresAdmin) {
+    // Proste wyciągnięcie roli z tokena (bez bibliotek)
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+    
+    // Sprawdzamy czy role to tablica czy pojedynczy string i czy zawiera Admin
+    const isAdmin = Array.isArray(roles) ? roles.includes('Admin') : roles === 'Admin'
+    
+    if (!isAdmin) {
+      return next('/dashboard') // Brak uprawnień -> wykop na dashboard
+    }
+  }
+
+  next()
 })
 
 export default router

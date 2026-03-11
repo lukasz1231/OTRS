@@ -1,5 +1,5 @@
 <template>
-  <nav class="sticky top-0 z-50 w-full bg-bialeTlo shadow-md">
+  <nav class="sticky top-0 z-50 w-full bg-white shadow-md">
     <div class="max-w-6xl mx-auto px-6 py-4 md:flex md:items-center">
       
       <div class="flex items-center justify-between w-full md:w-auto">
@@ -12,7 +12,7 @@
 
         <button 
           @click="toggleMenu" 
-          class="md:hidden text-tekstSzary hover:text-tekstSzaryCiemny p-1 focus:outline-none cursor-pointer"
+          class="md:hidden text-gray-500 hover:text-gray-700 p-1 focus:outline-none cursor-pointer"
         >
           <svg v-if="!isOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
           <svg v-else xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -38,7 +38,8 @@
               'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded transition-all duration-200 w-full md:w-auto cursor-pointer',
               activeTab === item.id 
                 ? 'bg-przyciskiNiebieski text-white shadow-sm' 
-                : 'text-tekstSzary hover:text-tekstSzaryCiemny hover:bg-gray-100'
+                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100',
+              item.id === 'admin' ? 'border border-red-100 text-red-600 hover:bg-red-50' : ''
             ]"
           >
             <component :is="item.icon" />
@@ -51,7 +52,7 @@
           
           <button 
             @click="goToProfile"
-            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-tekstSzary hover:text-przyciskiNiebieski transition-all duration-200 w-full md:w-auto cursor-pointer"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-500 hover:text-przyciskiNiebieski transition-all duration-200 w-full md:w-auto cursor-pointer"
           >
             <IconUser />
             <span>Moje konto</span>
@@ -59,7 +60,7 @@
 
           <button 
             @click="handleLogout"
-            class="flex items-center justify-center w-full md:w-auto p-1.5 text-tekstSzary bg-white border border-placeholder rounded hover:bg-gray-100 hover:text-red-500 transition-colors gap-2 cursor-pointer"
+            class="flex items-center justify-center w-full md:w-auto p-1.5 text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:text-red-500 transition-colors gap-2 cursor-pointer"
           >
             <IconLogout />
             <span class="md:hidden text-sm font-medium">Wyloguj się</span>
@@ -82,56 +83,66 @@
 </template>
 
 <script setup>
-import { ref, h, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, h, onMounted, onUnmounted, computed, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
-// Ikony
+// Ikony (Render Functions)
 const IconDashboard = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"18", height:"18", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" }), h('polyline', { points: "9 22 9 12 15 12 15 22" })]);
 const IconTicket = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"18", height:"18", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M2 16l4 4 4-4" }), h('path', { d: "M4 12V4h16v8" }), h('path', { d: "M10 20h8v-8" })]);
+const IconAdmin = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"18", height:"18", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" })]);
 const IconLogout = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"20", height:"20", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" }), h('polyline', { points: "16 17 21 12 16 7" }), h('line', { x1: "21", x2: "9", y1: "12", y2: "12" })]);
 const IconUser = () => h('svg', { xmlns:"http://www.w3.org/2000/svg", width:"20", height:"20", viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", "stroke-width":"2", "stroke-linecap":"round", "stroke-linejoin":"round" }, [h('path', { d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" }), h('circle', { cx: "12", cy: "7", r: "4" })]);
 
-const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
-  { id: 'problemReportClient', label: 'Zgłoszenia', icon: IconTicket }
-];
-
-const activeTab = ref('dashboard');
 const isOpen = ref(false);
-const isAuthenticated = ref(!!localStorage.getItem('token'));
+const activeTab = ref('dashboard');
 
-const updateAuthState = () => {
-  isAuthenticated.value = !!localStorage.getItem('token');
-};
+// 1. Reaktywny token - serce systemu odświeżania bez F5
+const userToken = ref(localStorage.getItem('token'));
 
-const handleAuthChange = () => {
-  updateAuthState();
-};
+const isAuthenticated = computed(() => !!userToken.value);
 
-onMounted(() => {
-  const currentPath = router.currentRoute.value.name;
-  if (currentPath && menuItems.some(item => item.id === currentPath)) {
-    activeTab.value = currentPath;
-  }
-  
-  window.addEventListener('auth-change', handleAuthChange);
-  
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'token') {
-      updateAuthState();
+// 2. isAdmin oparty na reaktywnym tokenie
+const isAdmin = computed(() => {
+  if (!userToken.value) return false;
+  try {
+    const payload = JSON.parse(atob(userToken.value.split('.')[1]));
+    const roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || payload["role"] || payload["roles"];
+    
+    if (Array.isArray(roles)) {
+      return roles.includes('Admin');
     }
-  });
+    return roles === 'Admin';
+  } catch (e) { 
+    return false; 
+  }
 });
 
-onUnmounted(() => {
-  window.removeEventListener('auth-change', handleAuthChange);
+const menuItems = computed(() => {
+  const items = [
+    { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
+    { id: 'problemReportClient', label: 'Zgłoszenia', icon: IconTicket }
+  ];
+  if (isAdmin.value) {
+    items.push({ id: 'admin', label: 'Admin', icon: IconAdmin });
+  }
+  return items;
 });
 
-const toggleMenu = () => {
-  isOpen.value = !isOpen.value;
-};
+// 3. To naprawia "brak odświeżania": przy każdej zmianie strony (również po loginie)
+// sprawdzamy czy w localStorage pojawił się nowy token
+watch(() => route.path, () => {
+  userToken.value = localStorage.getItem('token');
+}, { immediate: true });
+
+// Śledzenie aktywnej zakładki
+watch(() => route.name, (newRouteName) => {
+  if (newRouteName) activeTab.value = newRouteName;
+}, { immediate: true });
+
+const toggleMenu = () => { isOpen.value = !isOpen.value; };
 
 const handleNavigation = (id) => {
   activeTab.value = id;
@@ -141,26 +152,25 @@ const handleNavigation = (id) => {
 
 const goToDashboard = () => {
   if (isAuthenticated.value) {
-    activeTab.value = 'dashboard';
     router.push({ name: 'dashboard' });
-  } else {
-    router.push({ name: 'login' });
+  } else { 
+    router.push({ name: 'login' }); 
   }
 };
 
 const goToProfile = () => {
   isOpen.value = false;
-  activeTab.value = 'profile';
   router.push({ name: 'profile' }); 
 };
 
-const goToLogin = () => {
-  router.push({ name: 'login' });
+const goToLogin = () => { 
+  isOpen.value = false;
+  router.push({ name: 'login' }); 
 };
 
 const handleLogout = () => {
   localStorage.removeItem('token');
-  isAuthenticated.value = false;
+  userToken.value = null; // Reaktywne wyczyszczenie
   isOpen.value = false;
   router.push({ name: 'login' });
 };
