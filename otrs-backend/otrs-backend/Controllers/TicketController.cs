@@ -49,10 +49,24 @@ namespace otrs_backend.Controllers
             {
                 return Unauthorized("Nie można zidentyfikować użytkownika.");
             }
-            return Ok(new { id = id, message = "Endpoint w budowie" });
+
+            try
+            {
+                var ticket = await _ticketService.GetTicketByIdAsync(id, currentUserId);
+
+                if (ticket == null)
+                {
+                    return NotFound(new { message = $"Nie znaleziono zgłoszenia o ID {id} lub nie masz do niego uprawnień." });
+                }
+
+                return Ok(ticket);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Błąd serwera", error = ex.Message });
+            }
         }
 
-        // NOWY ENDPOINT: Obsługa zapytania GET /api/ticket
         [HttpGet]
         public async Task<IActionResult> GetMyTickets()
         {
@@ -65,7 +79,6 @@ namespace otrs_backend.Controllers
 
             try
             {
-                // Odpytujemy nasz nowy, czysty serwis
                 var tickets = await _ticketService.GetMyTicketsAsync(currentUserId);
                 return Ok(tickets);
             }
@@ -73,6 +86,67 @@ namespace otrs_backend.Controllers
             {
                 return StatusCode(500, new { message = "Wystąpił błąd podczas pobierania zgłoszeń", error = ex.Message });
             }
+        }
+
+        [HttpPost("{id}/comment")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> AddComment(int id, [FromForm] string content, IFormFileCollection files)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
+            {
+                return Unauthorized("Nie można zidentyfikować użytkownika.");
+            }
+
+            if (string.IsNullOrWhiteSpace(content) && (files == null || files.Count == 0))
+            {
+                return BadRequest("Komentarz musi zawierać treść lub przynajmniej jeden załącznik.");
+            }
+
+            try
+            {
+                await _ticketService.AddCommentAsync(id, currentUserId, content, files);
+                return Ok(new { message = "Komentarz z załącznikami został dodany pomyślnie." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Admin,Helpdesk,Technik")]
+        public async Task<IActionResult> ChangeTicketStatus(int id, [FromBody] ChangeStatusRequest request)
+        {
+            try
+            {
+                await _ticketService.UpdateStatusAsync(id, request.NewStatus);
+                return Ok(new { message = "Status zaktualizowany pomyślnie." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("statuses")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetStatuses()
+        {
+            try
+            {
+                var statuses = await _ticketService.GetAllStatusesAsync();
+                return Ok(statuses);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Błąd podczas pobierania statusów", error = ex.Message });
+            }
+        }
+
+        public class ChangeStatusRequest
+        {
+            public string NewStatus { get; set; }
         }
     }
 }

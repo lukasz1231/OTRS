@@ -2,16 +2,33 @@
 using otrs_backend.Data;
 using otrs_backend.Models;
 using otrs_backend.Requests;
+using System.Net.Mail;
 
 namespace otrs_backend.Services
 {
+    public class AttachmentDto
+    {
+        public int Id { get; set; }
+        public string FileName { get; set; }
+        public string FilePath { get; set; }
+    }
+
+    public class CommentDto
+    {
+        public int Id { get; set; }
+        public string Content { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public string UserName { get; set; }
+        public string UserRole { get; set; }
+        public List<AttachmentDto> Attachments { get; set; } = new();
+    }
+
     public class TicketDto
     {
         public int Id { get; set; }
-        // DODANE: Pole dla PublicId (jak w Twoich mockach)
         public string PublicId => $"ZGL-{Id:D5}";
         public string Title { get; set; }
-        public string Description { get; set; } // DODANE: Opis
+        public string Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Client { get; set; }
         public string Status { get; set; }
@@ -20,6 +37,7 @@ namespace otrs_backend.Services
         public string Type { get; set; }
         public string Queue { get; set; }
         public bool IsMyTicket { get; set; }
+        public List<CommentDto> Comments { get; set; } = new();
     }
 
     public class TicketService
@@ -70,7 +88,7 @@ namespace otrs_backend.Services
                 {
                     Id = t.Id,
                     Title = t.Title,
-                    Description = t.Description, // ZMIANA: Przesyłamy opis z bazy
+                    Description = t.Description,
                     CreatedAt = t.CreatedAt,
                     Client = t.Client,
                     Status = t.Status.Name,
@@ -82,6 +100,124 @@ namespace otrs_backend.Services
                 })
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
+        }
+
+        public async Task<TicketDto?> GetTicketByIdAsync(int ticketId, int currentUserId)
+        {
+            return await _context.Tickets
+                .Include(t => t.Comments)
+                    .ThenInclude(c => c.User)
+                .Include(t => t.Comments)
+                    .ThenInclude(c => c.Attachments)
+                .Include(t => t.Status)
+                .Include(t => t.Priority)
+                .Include(t => t.Category)
+                .Include(t => t.Type)
+                .Include(t => t.Queue)
+                .Where(t => t.Id == ticketId)
+                .Where(t => t.CreatorId == currentUserId || t.AssignedUsers.Any(u => u.Id == currentUserId))
+                .Select(t => new TicketDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Description = t.Description,
+                    CreatedAt = t.CreatedAt,
+                    Client = t.Client,
+                    Status = t.Status.Name,
+                    Priority = t.Priority.Name,
+                    Category = t.Category.Name,
+                    Type = t.Type.Name,
+                    Queue = t.Queue.Name,
+                    IsMyTicket = t.CreatorId == currentUserId,
+
+                    Comments = t.Comments.Select(c => new CommentDto
+                    {
+                        Id = c.Id,
+                        Content = c.Content,
+                        CreatedAt = c.CreatedAt,
+                        UserName = $"{c.User.Name} {c.User.Surname}",
+                        UserRole = string.Join(", ", c.User.Roles.Select(r => r.Name)),
+
+                        Attachments = c.Attachments.Select(a => new AttachmentDto
+                        {
+                            Id = a.Id,
+                            FileName = a.FileName,
+                            FilePath = a.FilePath
+                        }).ToList()
+                    })
+                    .OrderBy(c => c.CreatedAt)
+                    .ToList()
+                })
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task AddCommentAsync(int ticketId, int userId, string content, IFormFileCollection files)
+        {
+            var comment = new Comment
+            {
+                TicketId = ticketId,
+                UserId = userId,
+                Content = content ?? "",
+                CreatedAt = DateTime.Now
+            };
+
+            if (files != null && files.Count > 0)
+            {
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                foreach (var file in files)
+                {
+                    var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+
+                    comment.Attachments.Add(new otrs_backend.Models.Attachment
+                    {
+                        FileName = file.FileName,
+                        FilePath = $"/uploads/{uniqueFileName}",
+                        ContentType = file.ContentType,
+                        FileSize = file.Length
+                    });
+                }
+            }
+
+            _context.Comments.Add(comment);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateStatusAsync(int ticketId, string newStatusName)
+        {
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null)
+            {
+                throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
+            }
+
+            var newStatus = await _context.Statuses.FirstOrDefaultAsync(s => s.Name == newStatusName);
+            if (newStatus == null)
+            {
+                throw new Exception($"Status '{newStatusName}' nie istnieje w bazie danych.");
+            }
+
+            if (ticket.StatusId == newStatus.Id)
+            {
+                return;
+            }
+
+            ticket.StatusId = newStatus.Id;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<Status>> GetAllStatusesAsync()
+        {
+            return await _context.Statuses.ToListAsync();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using otrs_backend.Models;
+using System.Net.Mail;
 
 namespace otrs_backend.Data
 {
@@ -19,6 +20,7 @@ namespace otrs_backend.Data
         public DbSet<Priority> Priorities => Set<Priority>();
         public DbSet<Que> Ques => Set<Que>();
         public DbSet<Models.Type> Types => Set<Models.Type>();
+        public DbSet<otrs_backend.Models.Attachment> Attachments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -106,6 +108,13 @@ namespace otrs_backend.Data
                 .HasMany(u => u.Ques)
                 .WithMany(q => q.Users)
                 .UsingEntity(j => j.ToTable("UserQueues")); // Ta tabela zostanie stworzona w SQLite
+
+            // Attachment → Comment
+            modelBuilder.Entity<otrs_backend.Models.Attachment>()
+                .HasOne(a => a.Comment)
+                .WithMany(c => c.Attachments)
+                .HasForeignKey(a => a.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

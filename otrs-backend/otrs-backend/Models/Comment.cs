@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Net.Mail;
 
 namespace otrs_backend.Models
 {
@@ -12,5 +13,6 @@ namespace otrs_backend.Models
         public Ticket Ticket { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
+        public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
     }
 }
