@@ -24,21 +24,21 @@ namespace otrs_backend.Services
     }
 
     public class TicketDto
-    {
-        public int Id { get; set; }
-        public string PublicId => $"ZGL-{Id:D5}";
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public string Client { get; set; }
-        public string Status { get; set; }
-        public string Priority { get; set; }
-        public string Category { get; set; }
-        public string Type { get; set; }
-        public string Queue { get; set; }
-        public bool IsMyTicket { get; set; }
-        public List<CommentDto> Comments { get; set; } = new();
-    }
+{
+    public int Id { get; set; }
+    public string PublicId { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string Client { get; set; }
+    public string Status { get; set; }
+    public string Priority { get; set; }
+    public string Category { get; set; }
+    public string Type { get; set; }
+    public string Queue { get; set; }
+    public bool IsMyTicket { get; set; }
+    public List<CommentDto> Comments { get; set; } = new();
+}
 
     public class TicketService
     {
@@ -55,8 +55,11 @@ namespace otrs_backend.Services
                 .FirstOrDefaultAsync(s => s.Name == "Nowy")
                 ?? throw new Exception("Błąd konfiguracji systemu: Brak statusu 'Nowy' w bazie danych.");
 
+            var publicId = await GeneratePublicIdAsync();
+
             var ticket = new Ticket
             {
+                PublicId = publicId,
                 Title = request.Title,
                 Description = request.Description,
                 Client = request.Client,
@@ -74,7 +77,29 @@ namespace otrs_backend.Services
 
             return ticket;
         }
+        private async Task<string> GeneratePublicIdAsync()
+        {
+            var today = DateTime.UtcNow.ToString("yyyyMMdd");
+            var prefix = "PL";
 
+            // Znajdź ostatni ticket z dzisiejszą datą
+            var lastTicket = await _context.Tickets
+                .Where(t => t.PublicId != null && t.PublicId.StartsWith(prefix + today))
+                .OrderByDescending(t => t.PublicId)
+                .FirstOrDefaultAsync();
+
+            if (lastTicket == null)
+            {
+                // Pierwsze zgłoszenie dzisiaj - 5 cyfr
+                return $"{prefix}{today}00001";
+            }
+
+            // Wyciągnij numer z ostatniego ID (ostatnie 5 znaków)
+            var lastNumber = int.Parse(lastTicket.PublicId.Substring(prefix.Length + today.Length));
+            var newNumber = lastNumber + 1;
+
+            return $"{prefix}{today}{newNumber:D5}";
+        }
         public async Task<List<TicketDto>> GetMyTicketsAsync(int currentUserId)
         {
             return await _context.Tickets
@@ -87,6 +112,7 @@ namespace otrs_backend.Services
                 .Select(t => new TicketDto
                 {
                     Id = t.Id,
+                    PublicId = t.PublicId,
                     Title = t.Title,
                     Description = t.Description,
                     CreatedAt = t.CreatedAt,
@@ -119,6 +145,7 @@ namespace otrs_backend.Services
                 .Select(t => new TicketDto
                 {
                     Id = t.Id,
+                    PublicId = t.PublicId,
                     Title = t.Title,
                     Description = t.Description,
                     CreatedAt = t.CreatedAt,

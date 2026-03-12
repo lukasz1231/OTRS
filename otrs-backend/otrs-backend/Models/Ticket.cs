@@ -8,6 +8,12 @@ namespace otrs_backend.Models
     {
         [Key]
         public int Id { get; set; }
+        
+        [Required]
+        [StringLength(50)]
+        public string PublicId { get; set; }
+        
+        [Required]
         public string Title { get; set; }
         public string Description { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -27,6 +33,5 @@ namespace otrs_backend.Models
         public Que Queue { get; set; }
         public ICollection<User> AssignedUsers { get; set; } = new List<User>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
-
     }
 }
