@@ -56,22 +56,40 @@
         ]"
       >
         <div class="flex flex-col gap-3 md:flex-row md:gap-2">
-          <button
-            v-for="item in menuItems"
-            :key="item.id"
-            @click="handleNavigation(item.id)"
-            :class="[
-              'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded transition-all duration-200 w-full md:w-auto cursor-pointer',
-              activeTab === item.id
-                ? 'bg-przyciskiNiebieski text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100',
-              item.id === 'admin' ? 'border border-red-100 text-red-600 hover:bg-red-50' : '',
-            ]"
-          >
-            <component :is="item.icon" />
-            {{ item.label }}
-          </button>
-        </div>
+  <!-- Standardowe menu items -->
+  <button 
+    v-for="item in menuItems" 
+    :key="item.id"
+    @click="handleNavigation(item.id)"
+    :class="[
+      'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded transition-all duration-200 w-full md:w-auto cursor-pointer',
+      activeTab === item.id
+        ? 'bg-przyciskiNiebieski text-white shadow-sm'
+        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100',
+      item.id === 'admin' ? 'border border-red-100 text-red-600 hover:bg-red-50' : '',
+    ]"
+  >
+    <component :is="item.icon" />
+    {{ item.label }}
+  </button>
+
+  <!-- NOWY PRZYCISK: Utwórz zgłoszenie -->
+  <button
+    @click="goToCreateTicket"
+    :class="[
+      'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded transition-all duration-200 w-full md:w-auto cursor-pointer',
+      isCreateTicketActive
+        ? 'bg-przyciskiNiebieski text-white shadow-sm'
+        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+    ]"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M5 12h14"/>
+      <path d="M12 5v14"/>
+    </svg>
+    Utwórz zgłoszenie
+  </button>
+</div>
 
         <div class="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
           <div class="border-t border-gray-300 w-full md:hidden my-2"></div>
@@ -237,7 +255,7 @@ const isAdmin = computed(() => {
 const menuItems = computed(() => {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
-    { id: 'problemReportClient', label: 'Zgłoszenia', icon: IconTicket },
+    { id: 'myTickets', label: 'Zgłoszenia', icon: IconTicket },
   ]
   if (isAdmin.value) {
     items.push({ id: 'admin', label: 'Admin', icon: IconAdmin })
@@ -294,6 +312,19 @@ const handleLogout = async () => {
     userStore.clearUser()
     isOpen.value = false
     router.push({ name: 'login' })
+  }
+}
+const isCreateTicketActive = computed(() => {
+  return route.name === 'problemReportClient' || route.name === 'problemReportHelpdesk'
+})
+
+const goToCreateTicket = () => {
+  isOpen.value = false
+  const user = userStore.user
+  if (user?.roles?.includes('Helpdesk') || user?.roles?.includes('Admin')) {
+    router.push({ name: 'problemReportHelpdesk' })
+  } else {
+    router.push({ name: 'problemReportClient' })
   }
 }
 </script>

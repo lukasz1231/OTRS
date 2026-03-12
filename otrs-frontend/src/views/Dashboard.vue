@@ -70,12 +70,23 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+
+const router = useRouter()
+const userStore = useUserStore()
+
 const createTicket = () => {
-  console.log('Kliknięto: Utwórz zgłoszenie')
+  const user = userStore.user
+  if (user?.roles?.includes('Helpdesk') || user?.roles?.includes('Admin')) {
+    router.push({ name: 'problemReportHelpdesk' })
+  } else {
+    router.push({ name: 'problemReportClient' })
+  }
 }
 
 const viewTickets = () => {
-  console.log('Kliknięto: Przeglądaj zgłoszenia')
+  router.push({ name: 'myTickets' })
 }
 
 const stats = ref([

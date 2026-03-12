@@ -1,6 +1,13 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
+  <div class="min-h-screen bg-bialeTlo p-6">
     <div class="max-w-6xl mx-auto">
+      <button
+        @click="$router.push({ name: 'admin' })"
+        class="mb-6 text-gray-500 hover:text-blue-600 flex items-center gap-2 cursor-pointer transition-colors"
+      >
+        ← Wstecz
+      </button>
+
       <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <h1 class="text-3xl font-bold text-gray-800">Panel Administratora</h1>
 
@@ -50,7 +57,7 @@
                 <span
                   v-for="role in user.roles"
                   :key="role"
-                  class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mr-1"
+                  class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mr-1 uppercase"
                 >
                   {{ role }}
                 </span>
@@ -80,9 +87,7 @@
 
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-bold uppercase text-gray-500 mb-1"
-              >Imię i Nazwisko</label
-            >
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Imię i Nazwisko</label>
             <div class="grid grid-cols-2 gap-2">
               <input
                 v-model="editForm.name"
@@ -119,9 +124,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold uppercase text-gray-500 mb-1"
-              >Zmień hasło (opcjonalnie)</label
-            >
+            <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Zmień hasło (opcjonalnie)</label>
             <input
               v-model="editForm.newPassword"
               type="password"
@@ -150,59 +153,11 @@
   </div>
 </template>
 
-<!-- <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-
-const users = ref([]);
-const allRoles = ref([]);
-const searchQuery = ref('');
-const isModalOpen = ref(false);
-const editForm = ref({ id: null, name: '', surname: '', email: '', roles: [], newPassword: '' });
-
-const fetchUsers = async () => {
-  try {
-    const response = await axios.get(`http://localhost:5066/api/Admin/users?search=${searchQuery.value}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    users.value = response.data;
-  } catch (err) { console.error("Błąd pobierania użytkowników", err); }
-};
-
-const fetchRoles = async () => {
-  try {
-    const response = await axios.get(`http://localhost:5066/api/Admin/roles`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    allRoles.value = response.data;
-  } catch (err) { console.error("Błąd pobierania ról", err); }
-};
-
-const openEditModal = (user) => {
-  editForm.value = { ...user, newPassword: '' };
-  isModalOpen.value = true;
-};
-
-const saveChanges = async () => {
-  try {
-    await axios.put(`http://localhost:5066/api/Admin/users/${editForm.value.id}`, editForm.value, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    isModalOpen.value = false;
-    fetchUsers();
-    alert("Dane zaktualizowane!");
-  } catch (err) { alert("Błąd podczas zapisywania zmian."); }
-};
-
-onMounted(() => {
-  fetchUsers();
-  fetchRoles();
-});
-</script> -->
-
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, inject } from 'vue'
 import axios from 'axios'
+
+const showNotification = inject('showNotification')
 
 const users = ref([])
 const allRoles = ref([])
@@ -210,10 +165,7 @@ const searchQuery = ref('')
 const isModalOpen = ref(false)
 const editForm = ref({ id: null, name: '', surname: '', email: '', roles: [], newPassword: '' })
 
-// ZMIANA: Strzelamy bezpośrednio na HTTPS. Zmień XXXX na Twój port HTTPS z backendu!
 const API_URL = 'https://localhost:7054/api/Admin'
-
-// Konfiguracja Axios dla ciasteczek HttpOnly
 const axiosConfig = { withCredentials: true }
 
 const fetchUsers = async () => {
@@ -222,6 +174,7 @@ const fetchUsers = async () => {
     users.value = response.data
   } catch (err) {
     console.error('Błąd pobierania użytkowników', err)
+    showNotification('Nie udało się pobrać listy użytkowników.', 'error')
   }
 }
 
@@ -243,10 +196,11 @@ const saveChanges = async () => {
   try {
     await axios.put(`${API_URL}/users/${editForm.value.id}`, editForm.value, axiosConfig)
     isModalOpen.value = false
-    fetchUsers()
-    alert('Dane zaktualizowane!')
+    await fetchUsers()
+    
+    showNotification('Dane użytkownika zostały zaktualizowane!', 'success')
   } catch (err) {
-    alert('Błąd podczas zapisywania zmian.')
+    showNotification('Wystąpił błąd podczas zapisywania zmian.', 'error')
     console.log(err)
   }
 }

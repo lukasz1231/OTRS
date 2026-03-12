@@ -106,10 +106,26 @@ namespace otrs_backend.Controllers
         [HttpGet("queues/{id}/users")]
         public async Task<IActionResult> GetQueueUsers(int id)
         {
-            var queue = await _context.Ques.Include(q => q.Users).FirstOrDefaultAsync(q => q.Id == id);
-            return queue == null ? NotFound() : Ok(queue.Users.Select(u => new { u.Id, u.Name, u.Surname, u.Email }));
-        }
+            // 1. Musimy użyć ThenInclude, żeby dociągnąć role użytkowników przypisanych do kolejki
+            var queue = await _context.Ques
+                .Include(q => q.Users)
+                    .ThenInclude(u => u.Roles) 
+                .FirstOrDefaultAsync(q => q.Id == id);
 
+            if (queue == null) return NotFound();
+
+            // 2. KLUCZOWY MOMENT: Musisz dopisać "Roles = ..." do Selecta, 
+            // inaczej serwer wyśle tylko imię i nazwisko, a roles pominie.
+            var result = queue.Users.Select(u => new { 
+                u.Id, 
+                u.Name, 
+                u.Surname, 
+                u.Email,
+                Roles = u.Roles.Select(r => r.Name).ToList() // <--- TEGO BRAKOWAŁO!
+            });
+
+            return Ok(result);
+        }
         [HttpPost("queues/{id}/users/{userId}")]
         public async Task<IActionResult> AddUserToQueue(int id, int userId)
         {
@@ -126,6 +142,131 @@ namespace otrs_backend.Controllers
             var queue = await _context.Ques.Include(q => q.Users).FirstOrDefaultAsync(q => q.Id == id);
             var user = queue?.Users.FirstOrDefault(u => u.Id == userId);
             if (user != null) { queue.Users.Remove(user); await _context.SaveChangesAsync(); }
+            return Ok();
+        }
+
+        #endregion
+
+        #region Zarządzanie Statusami
+
+        [HttpGet("statuses")] // To powinno dać /api/Admin/statuses
+            public async Task<IActionResult> GetStatuses() 
+            {
+                return Ok(await _context.Statuses.ToListAsync());
+            }
+
+        [HttpPost("statuses")]
+        public async Task<IActionResult> CreateStatus([FromBody] Status status)
+        {
+            if (string.IsNullOrWhiteSpace(status.Name)) return BadRequest("Nazwa jest wymagana.");
+            
+            _context.Statuses.Add(status);
+            await _context.SaveChangesAsync();
+            return Ok(status);
+        }
+
+        [HttpDelete("statuses/{id}")]
+        public async Task<IActionResult> DeleteStatus(int id)
+        {
+            var status = await _context.Statuses.FindAsync(id);
+            if (status == null) return NotFound();
+
+            // Sprawdzamy, czy jakieś zgłoszenie używa tego statusu
+            var isUsed = await _context.Tickets.AnyAsync(t => t.StatusId == id);
+            if (isUsed) return BadRequest("Nie można usunąć statusu, który jest przypisany do zgłoszeń!");
+
+            _context.Statuses.Remove(status);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPut("statuses/{id}")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] Status status)
+        {
+            var existingStatus = await _context.Statuses.FindAsync(id);
+            if (existingStatus == null) return NotFound();
+
+            existingStatus.Name = status.Name;
+            existingStatus.Description = status.Description;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Status zaktualizowany" });
+        }
+
+        #endregion
+
+        #region Zarządzanie Kategoriami (Services)
+
+        [HttpGet("categories")]
+        public async Task<IActionResult> GetCategories() => Ok(await _context.Categories.ToListAsync());
+
+        [HttpPost("categories")]
+        public async Task<IActionResult> CreateCategory([FromBody] Category cat)
+        {
+            _context.Categories.Add(cat);
+            await _context.SaveChangesAsync();
+            return Ok(cat);
+        }
+
+        [HttpPut("categories/{id}")]
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] Category cat)
+        {
+            var existing = await _context.Categories.FindAsync(id);
+            if (existing == null) return NotFound();
+            existing.Name = cat.Name;
+            existing.Description = cat.Description;
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        [HttpDelete("categories/{id}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var cat = await _context.Categories.FindAsync(id);
+            if (cat == null) return NotFound();
+            if (await _context.Tickets.AnyAsync(t => t.CategoryId == id)) 
+                return BadRequest("Kategoria jest przypisana do zgłoszeń!");
+            _context.Categories.Remove(cat);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        #endregion
+
+        #region Zarządzanie Priorytetami
+
+        [HttpGet("priorities")]
+        public async Task<IActionResult> GetPriorities() => Ok(await _context.Priorities.OrderByDescending(p => p.Level).ToListAsync());
+
+        [HttpPost("priorities")]
+        public async Task<IActionResult> CreatePriority([FromBody] Priority prio)
+        {
+            _context.Priorities.Add(prio);
+            await _context.SaveChangesAsync();
+            return Ok(prio);
+        }
+
+        [HttpPut("priorities/{id}")]
+        public async Task<IActionResult> UpdatePriority(int id, [FromBody] Priority prio)
+        {
+            var existing = await _context.Priorities.FindAsync(id);
+            if (existing == null) return NotFound();
+            existing.Name = prio.Name;
+            existing.Description = prio.Description;
+            existing.Level = prio.Level;
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        [HttpDelete("priorities/{id}")]
+        public async Task<IActionResult> DeletePriority(int id)
+        {
+            var prio = await _context.Priorities.FindAsync(id);
+            if (prio == null) return NotFound();
+            if (await _context.Tickets.AnyAsync(t => t.PriorityId == id)) 
+                return BadRequest("Priorytet jest używany!");
+            _context.Priorities.Remove(prio);
+            await _context.SaveChangesAsync();
             return Ok();
         }
 

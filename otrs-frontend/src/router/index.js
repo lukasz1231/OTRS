@@ -16,6 +16,10 @@ import ContactPage from '@/views/ContactPage.vue'
 import AdminUsers from '@/views/AdminUsers.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
 import AdminQueues from '@/views/AdminQueues.vue'
+import AdminStatuses from '@/views/AdminStatuses.vue'
+import AdminPriorities from '@/views/AdminPriorities.vue'
+import AdminCategories from '@/views/AdminCategories.vue'
+import MyTickets from '@/views/MyTickets.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -122,10 +126,34 @@ routes: [
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
+      path: '/admin/statuses',
+      name: 'admin-statuses',
+      component: AdminStatuses,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/admin/priorities',
+      name: 'admin-priorities',
+      component: AdminPriorities,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/admin/categories',
+      name: 'admin-categories',
+      component: AdminCategories,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
       path: '/ticket/:id',
       name: 'ticket-details',
       component: () => import('../views/TicketDetailsView.vue'),
       props: true
+    },
+    {
+      path: '/my-tickets',
+      name: 'myTickets',
+      component: MyTickets,
+      meta: { requiresAuth: true }
     }
   ],
 })
