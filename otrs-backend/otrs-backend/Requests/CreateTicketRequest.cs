@@ -3,28 +3,15 @@
 namespace otrs_backend.Requests
 {
     public class CreateTicketRequest
-    {
-        [Required]
-        [StringLength(50, MinimumLength = 5)]
-        public string Title { get; set; }
-
-        [Required]
-        [MinLength(20)]
-        public string Description { get; set; }
-
-        [Required]
-        public string Client { get; set; }
-
-        [Required]
-        public int CategoryId { get; set; }
-
-        [Required]
-        public int PriorityId { get; set; }
-
-        [Required]
-        public int TypeId { get; set; }
-
-        [Required]
-        public int QueueId { get; set; }
-    }
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    
+    // ZMIANA: z string na int
+    public int ClientId { get; set; } 
+    public int TypeId { get; set; }
+    public int PriorityId { get; set; }
+    public int CategoryId { get; set; }
+    public int QueueId { get; set; }
+}
 }

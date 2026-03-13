@@ -2,43 +2,42 @@
 using otrs_backend.Data;
 using otrs_backend.Models;
 using otrs_backend.Requests;
-using System.Net.Mail;
 
 namespace otrs_backend.Services
 {
     public class AttachmentDto
     {
         public int Id { get; set; }
-        public string FileName { get; set; }
-        public string FilePath { get; set; }
+        public string FileName { get; set; } = default!;
+        public string FilePath { get; set; } = default!;
     }
 
     public class CommentDto
     {
         public int Id { get; set; }
-        public string Content { get; set; }
+        public string Content { get; set; } = default!;
         public DateTime CreatedAt { get; set; }
-        public string UserName { get; set; }
-        public string UserRole { get; set; }
+        public string UserName { get; set; } = default!;
+        public string UserRole { get; set; } = default!;
         public List<AttachmentDto> Attachments { get; set; } = new();
     }
 
     public class TicketDto
-{
-    public int Id { get; set; }
-    public string PublicId { get; set; }
-    public string Title { get; set; }
-    public string Description { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public string Client { get; set; }
-    public string Status { get; set; }
-    public string Priority { get; set; }
-    public string Category { get; set; }
-    public string Type { get; set; }
-    public string Queue { get; set; }
-    public bool IsMyTicket { get; set; }
-    public List<CommentDto> Comments { get; set; } = new();
-}
+    {
+        public int Id { get; set; }
+        public string PublicId { get; set; } = default!;
+        public string Title { get; set; } = default!;
+        public string Description { get; set; } = default!;
+        public DateTime CreatedAt { get; set; }
+        public string Client { get; set; } = default!; // Zwracamy nazwę klienta jako string do frontu
+        public string Status { get; set; } = default!;
+        public string Priority { get; set; } = default!;
+        public string Category { get; set; } = default!;
+        public string Type { get; set; } = default!;
+        public string Queue { get; set; } = default!;
+        public bool IsMyTicket { get; set; }
+        public List<CommentDto> Comments { get; set; } = new();
+    }
 
     public class TicketService
     {
@@ -62,7 +61,7 @@ namespace otrs_backend.Services
                 PublicId = publicId,
                 Title = request.Title,
                 Description = request.Description,
-                Client = request.Client,
+                ClientId = request.ClientId, // POPRAWKA: używamy ID z modelu Client
                 CategoryId = request.CategoryId,
                 PriorityId = request.PriorityId,
                 TypeId = request.TypeId,
@@ -77,12 +76,12 @@ namespace otrs_backend.Services
 
             return ticket;
         }
+
         private async Task<string> GeneratePublicIdAsync()
         {
             var today = DateTime.UtcNow.ToString("yyyyMMdd");
             var prefix = "PL";
 
-            // Znajdź ostatni ticket z dzisiejszą datą
             var lastTicket = await _context.Tickets
                 .Where(t => t.PublicId != null && t.PublicId.StartsWith(prefix + today))
                 .OrderByDescending(t => t.PublicId)
@@ -90,19 +89,23 @@ namespace otrs_backend.Services
 
             if (lastTicket == null)
             {
-                // Pierwsze zgłoszenie dzisiaj - 5 cyfr
                 return $"{prefix}{today}00001";
             }
 
-            // Wyciągnij numer z ostatniego ID (ostatnie 5 znaków)
-            var lastNumber = int.Parse(lastTicket.PublicId.Substring(prefix.Length + today.Length));
-            var newNumber = lastNumber + 1;
+            var lastNumberStr = lastTicket.PublicId.Substring(prefix.Length + today.Length);
+            if (int.TryParse(lastNumberStr, out int lastNumber))
+            {
+                var newNumber = lastNumber + 1;
+                return $"{prefix}{today}{newNumber:D5}";
+            }
 
-            return $"{prefix}{today}{newNumber:D5}";
+            return $"{prefix}{today}00001";
         }
+
         public async Task<List<TicketDto>> GetMyTicketsAsync(int currentUserId)
         {
             return await _context.Tickets
+                .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
                 .Include(t => t.Status)
                 .Include(t => t.Priority)
                 .Include(t => t.Category)
@@ -116,7 +119,7 @@ namespace otrs_backend.Services
                     Title = t.Title,
                     Description = t.Description,
                     CreatedAt = t.CreatedAt,
-                    Client = t.Client,
+                    Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
                     Status = t.Status.Name,
                     Priority = t.Priority.Name,
                     Category = t.Category.Name,
@@ -131,6 +134,7 @@ namespace otrs_backend.Services
         public async Task<TicketDto?> GetTicketByIdAsync(int ticketId, int currentUserId)
         {
             return await _context.Tickets
+                .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
                 .Include(t => t.Comments)
                     .ThenInclude(c => c.User)
                 .Include(t => t.Comments)
@@ -149,7 +153,7 @@ namespace otrs_backend.Services
                     Title = t.Title,
                     Description = t.Description,
                     CreatedAt = t.CreatedAt,
-                    Client = t.Client,
+                    Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
                     Status = t.Status.Name,
                     Priority = t.Priority.Name,
                     Category = t.Category.Name,
@@ -219,7 +223,7 @@ namespace otrs_backend.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateStatusAsync(int ticketId, string newStatusName)
+        public async Task UpdateStatusAsync(int ticketId, int newStatusId) // POPRAWKA: przyjmujemy int Id
         {
             var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
             if (ticket == null)
@@ -227,18 +231,13 @@ namespace otrs_backend.Services
                 throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
             }
 
-            var newStatus = await _context.Statuses.FirstOrDefaultAsync(s => s.Name == newStatusName);
-            if (newStatus == null)
+            var statusExists = await _context.Statuses.AnyAsync(s => s.Id == newStatusId);
+            if (!statusExists)
             {
-                throw new Exception($"Status '{newStatusName}' nie istnieje w bazie danych.");
+                throw new Exception($"Status o ID '{newStatusId}' nie istnieje.");
             }
 
-            if (ticket.StatusId == newStatus.Id)
-            {
-                return;
-            }
-
-            ticket.StatusId = newStatus.Id;
+            ticket.StatusId = newStatusId;
             await _context.SaveChangesAsync();
         }
 

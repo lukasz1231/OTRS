@@ -20,7 +20,8 @@ namespace otrs_backend.Models
         
         public int CreatorId { get; set; }
         public User Creator { get; set; }
-        public string Client { get; set; }
+        public int? ClientId { get; set; }
+        public Client? Client { get; set; }
         public int CategoryId { get; set; }
         public Category Category { get; set; }
         public int PriorityId { get; set; }

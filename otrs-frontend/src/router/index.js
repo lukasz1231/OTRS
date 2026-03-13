@@ -20,6 +20,7 @@ import AdminStatuses from '@/views/AdminStatuses.vue'
 import AdminPriorities from '@/views/AdminPriorities.vue'
 import AdminCategories from '@/views/AdminCategories.vue'
 import MyTickets from '@/views/MyTickets.vue'
+import AdminClients from '@/views/AdminClients.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -141,6 +142,12 @@ routes: [
       path: '/admin/categories',
       name: 'admin-categories',
       component: AdminCategories,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/admin/clietns',
+      name: 'admin-clients',
+      component: AdminClients,
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     {

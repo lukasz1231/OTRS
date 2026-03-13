@@ -120,7 +120,8 @@ namespace otrs_backend.Controllers
         {
             try
             {
-                await _ticketService.UpdateStatusAsync(id, request.NewStatus);
+                // Przekazujemy NewStatusId (int) zamiast stringa
+                await _ticketService.UpdateStatusAsync(id, request.NewStatusId);
                 return Ok(new { message = "Status zaktualizowany pomyślnie." });
             }
             catch (Exception ex)
@@ -146,7 +147,7 @@ namespace otrs_backend.Controllers
 
         public class ChangeStatusRequest
         {
-            public string NewStatus { get; set; }
+            public int NewStatusId { get; set; } 
         }
     }
 }

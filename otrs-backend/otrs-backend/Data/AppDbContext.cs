@@ -21,6 +21,7 @@ namespace otrs_backend.Data
         public DbSet<Que> Ques => Set<Que>();
         public DbSet<Models.Type> Types => Set<Models.Type>();
         public DbSet<otrs_backend.Models.Attachment> Attachments { get; set; }
+        public DbSet<Client> Clients => Set<Client>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

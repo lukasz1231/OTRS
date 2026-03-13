@@ -25,7 +25,15 @@
           class="bg-white p-5 rounded-xl shadow-sm flex justify-between items-center border border-gray-100 hover:shadow-md transition-shadow"
         >
           <div class="flex flex-col">
-            <h3 class="font-bold text-xl text-gray-800">{{ c.name }}</h3>
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-xl text-gray-800">{{ c.name }}</h3>
+              <span v-if="c.clientName" class="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold uppercase">
+                {{ c.clientName }}
+              </span>
+              <span v-else class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-bold uppercase">
+                Ogólna
+              </span>
+            </div>
             <p class="text-sm text-gray-500 italic">{{ c.description || 'Brak opisu' }}</p>
           </div>
           <div class="flex gap-3">
@@ -44,6 +52,17 @@
             <label class="text-xs font-bold text-gray-400 uppercase ml-1">Nazwa kategorii</label>
             <input v-model="currentCategory.name" type="text" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 shadow-sm" placeholder="np. Sprzęt IT" />
           </div>
+
+          <div>
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Przypisz do Klienta</label>
+            <select v-model="currentCategory.clientId" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 shadow-sm bg-white">
+              <option :value="null">-- Kategoria Ogólna (Wszyscy) --</option>
+              <option v-for="cl in clients" :key="cl.id" :value="cl.id">
+                {{ cl.name }}
+              </option>
+            </select>
+          </div>
+
           <div>
             <label class="text-xs font-bold text-gray-400 uppercase ml-1">Opis</label>
             <textarea v-model="currentCategory.description" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 shadow-sm h-24 resize-none" placeholder="Czego dotyczy ta usługa..."></textarea>
@@ -75,41 +94,79 @@ import axios from 'axios'
 
 const showNotification = inject('showNotification')
 const API_URL = 'https://localhost:7054/api/Admin/categories'
+const CLIENTS_URL = 'https://localhost:7054/api/Admin/clients'
 const axiosConfig = { withCredentials: true }
 
 const categories = ref([])
+const clients = ref([]) // Lista klientów do dropdowna
 const showModal = ref(false)
 const isEditing = ref(false)
-const currentCategory = ref({ id: null, name: '', description: '' })
+const currentCategory = ref({ id: null, name: '', description: '', clientId: null })
 const confirmModal = reactive({ show: false, message: '', action: null })
 
-const fetchCategories = async () => {
+const fetchInitialData = async () => {
   try {
-    const res = await axios.get(API_URL, axiosConfig)
-    categories.value = res.data.map(c => ({ id: c.id || c.Id, name: c.name || c.Name, description: c.description || c.Description }))
+    const [resCats, resClients] = await Promise.all([
+      axios.get(API_URL, axiosConfig),
+      axios.get(CLIENTS_URL, axiosConfig)
+    ])
+    
+    // Mapowanie kategorii (dodajemy clientName do podglądu na liście)
+    categories.value = resCats.data.map(c => ({ 
+      id: c.id || c.Id, 
+      name: c.name || c.Name, 
+      description: c.description || c.Description,
+      clientId: c.clientId || c.ClientId,
+      clientName: c.client?.name || c.Client?.Name // Jeśli Twoje API robi Include(t => t.Client)
+    }))
+
+    clients.value = resClients.data.map(cl => ({
+      id: cl.id || cl.Id,
+      name: cl.name || cl.Name
+    }))
   } catch (e) { console.error(e) }
 }
 
-const openAddModal = () => { isEditing.value = false; currentCategory.value = { id: null, name: '', description: '' }; showModal.value = true; }
-const openEditModal = (cat) => { isEditing.value = true; currentCategory.value = { ...cat }; showModal.value = true; }
+const openAddModal = () => { 
+  isEditing.value = false; 
+  currentCategory.value = { id: null, name: '', description: '', clientId: null }; 
+  showModal.value = true; 
+}
+
+const openEditModal = (cat) => { 
+  isEditing.value = true; 
+  currentCategory.value = { ...cat }; 
+  showModal.value = true; 
+}
 
 const saveCategory = async () => {
   if (!currentCategory.value.name) return
+  
   try {
+    // Tworzymy czysty obiekt bez pola Id dla nowych kategorii
+    const payload = {
+      name: currentCategory.value.name,
+      description: currentCategory.value.description,
+      clientId: currentCategory.value.clientId ? Number(currentCategory.value.clientId) : null
+    }
+
     if (isEditing.value) {
-      // Przy edycji (PUT) ID jest wymagane w URL i w body
-      await axios.put(`${API_URL}/${currentCategory.value.id}`, currentCategory.value, axiosConfig)
+      // Przy edycji dodajemy Id do URL i ewentualnie do body
+      await axios.put(`${API_URL}/${currentCategory.value.id}`, { 
+        ...payload, 
+        id: currentCategory.value.id 
+      }, axiosConfig)
     } else {
-      // Przy dodawaniu (POST) usuwamy ID, żeby nie wysyłać null
-      const { id, ...payload } = currentCategory.value 
+      // Przy dodawaniu wysyłamy TYLKO payload bez Id
       await axios.post(API_URL, payload, axiosConfig)
     }
+    
     showModal.value = false
-    await fetchCategories()
-    showNotification(isEditing.value ? 'Zaktualizowano kategorię!' : 'Dodano kategorię!', 'success')
-  } catch (e) { 
-    console.error(e.response?.data) // Sprawdź w konsoli co dokładnie boli serwer
-    showNotification('Błąd zapisu kategorii.', 'error') 
+    await fetchInitialData()
+    showNotification('Sukces!', 'success')
+  } catch (e) {
+    console.error("Szczegóły błędu:", e.response?.data)
+    showNotification('Błąd serwera. Sprawdź konsolę.', 'error')
   }
 }
 
@@ -119,12 +176,12 @@ const confirmDelete = (cat) => {
     try {
       await axios.delete(`${API_URL}/${cat.id}`, axiosConfig)
       confirmModal.show = false
-      await fetchCategories()
+      await fetchInitialData()
       showNotification('Usunięto.', 'success')
     } catch (e) { showNotification('Kategoria jest używana!', 'error'); confirmModal.show = false; }
   }
   confirmModal.show = true
 }
 
-onMounted(fetchCategories)
+onMounted(fetchInitialData)
 </script>
