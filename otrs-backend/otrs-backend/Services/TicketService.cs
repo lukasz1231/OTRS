@@ -104,14 +104,17 @@ namespace otrs_backend.Services
 
         public async Task<List<TicketDto>> GetMyTicketsAsync(int currentUserId)
         {
-            return await _context.Tickets
+            var userRoles = await GetUserRolesAsync(currentUserId);
+
+            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
+
+            return await visibleTicketsQuery
                 .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
                 .Include(t => t.Status)
                 .Include(t => t.Priority)
                 .Include(t => t.Category)
                 .Include(t => t.Type)
                 .Include(t => t.Queue)
-                .Where(t => t.CreatorId == currentUserId || t.AssignedUsers.Any(u => u.Id == currentUserId))
                 .Select(t => new TicketDto
                 {
                     Id = t.Id,
@@ -133,7 +136,11 @@ namespace otrs_backend.Services
 
         public async Task<TicketDto?> GetTicketByIdAsync(int ticketId, int currentUserId)
         {
-            return await _context.Tickets
+            var userRoles = await GetUserRolesAsync(currentUserId);
+
+            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
+
+            return await visibleTicketsQuery
                 .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
                 .Include(t => t.Comments)
                     .ThenInclude(c => c.User)
@@ -145,7 +152,6 @@ namespace otrs_backend.Services
                 .Include(t => t.Type)
                 .Include(t => t.Queue)
                 .Where(t => t.Id == ticketId)
-                .Where(t => t.CreatorId == currentUserId || t.AssignedUsers.Any(u => u.Id == currentUserId))
                 .Select(t => new TicketDto
                 {
                     Id = t.Id,
@@ -180,6 +186,41 @@ namespace otrs_backend.Services
                     .ToList()
                 })
                 .FirstOrDefaultAsync();
+        }
+
+        private async Task<HashSet<string>> GetUserRolesAsync(int userId)
+        {
+            var roles = await _context.Users
+                .Where(u => u.Id == userId)
+                .SelectMany(u => u.Roles.Select(r => r.Name))
+                .ToListAsync();
+
+            return roles.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static IQueryable<Ticket> ApplyTicketVisibilityRules(
+            IQueryable<Ticket> query,
+            int currentUserId,
+            HashSet<string> userRoles)
+        {
+            // Admin i Helpdesk widzą wszystkie zgłoszenia
+            if (userRoles.Contains("Admin") || userRoles.Contains("Helpdesk"))
+            {
+                return query;
+            }
+
+            // Technik widzi zgłoszenia przypisane do niego lub znajdujące się w jego kolejkach
+            if (userRoles.Contains("Technik"))
+            {
+                return query.Where(t =>
+                    t.AssignedUsers.Any(u => u.Id == currentUserId) ||
+                    t.Queue.Users.Any(u => u.Id == currentUserId));
+            }
+
+            // Zwykły użytkownik widzi własne zgłoszenia oraz te przypisane do niego.
+            return query.Where(t =>
+                t.CreatorId == currentUserId ||
+                t.AssignedUsers.Any(u => u.Id == currentUserId));
         }
 
         public async Task AddCommentAsync(int ticketId, int userId, string content, IFormFileCollection files)

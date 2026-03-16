@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
@@ -88,6 +88,58 @@ const createTicket = () => {
 const viewTickets = () => {
   router.push({ name: 'myTickets' })
 }
+
+const API_URL = 'https://localhost:7054/api/ticket'
+
+const normalizeLabel = (value) => {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+const loadDashboardStats = async () => {
+  try {
+    const ticketsResponse = await fetch(API_URL, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    if (!ticketsResponse.ok) {
+      throw new Error('Nie udało się pobrać zgłoszeń do dashboardu.')
+    }
+
+    const tickets = await ticketsResponse.json()
+    const safeTickets = Array.isArray(tickets) ? tickets : []
+
+    const now = Date.now()
+    const SLA_LIMIT_MS = 48 * 60 * 60 * 1000 // 48 godzin
+
+    const isNowy = (ticket) => normalizeLabel(ticket.status ?? ticket.Status) === 'nowy'
+    const isRozwiazane = (ticket) => normalizeLabel(ticket.status ?? ticket.Status) === 'rozwiazane'
+
+    const total = safeTickets.length
+    const newCount = safeTickets.filter((t) => isNowy(t)).length
+    const inProgressCount = safeTickets.filter((t) => !isNowy(t) && !isRozwiazane(t)).length
+    const slaBreachCount = safeTickets.filter((t) => {
+      const createdAtMs = new Date(t.createdAt ?? t.CreatedAt).getTime()
+      if (Number.isNaN(createdAtMs)) return false
+      return now - createdAtMs > SLA_LIMIT_MS
+    }).length
+
+    stats.value[0].value = total
+    stats.value[1].value = newCount
+    stats.value[2].value = inProgressCount
+    stats.value[3].value = slaBreachCount
+  } catch (error) {
+    console.error('Błąd ładowania statystyk dashboardu:', error)
+  }
+}
+
+onMounted(() => {
+  loadDashboardStats()
+})
 
 const stats = ref([
   {
