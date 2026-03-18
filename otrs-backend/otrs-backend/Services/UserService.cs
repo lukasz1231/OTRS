@@ -1,6 +1,7 @@
 ﻿// Services/UserService.cs
 using Microsoft.EntityFrameworkCore;
 using otrs_backend.Data;
+using otrs_backend.Requests;
 using otrs_backend.Responses;
 
 public class UserService
@@ -33,5 +34,23 @@ public class UserService
             Roles = user.Roles.Select(r => r.Name).ToList(),
             Queues = user.Ques.Select(q => q.Name).ToList()
         };
+    }
+    public async Task<bool> UpdateUserProfileAsync(int userId, UpdateProfileRequest request)
+    {
+        var user = await _context.Users.FindAsync(userId);
+
+        if (user == null) return false;
+
+        // Mapowanie danych z requestu do modelu bazodanowego
+        user.Name = request.Name;
+        user.Surname = request.Surname;
+        user.BirthDate = request.BirthDate;
+        user.Bio = request.Bio ?? user.Bio;
+        user.AvatarUrl = request.AvatarUrl ?? user.AvatarUrl;
+
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 }
