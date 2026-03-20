@@ -25,16 +25,16 @@
           <div class="flex bg-gray-100 p-1 rounded-xl">
             <button 
               v-for="filter in filters" 
-              :key="filter.value"
-              @click="activeFilter = filter.value"
+              :key="filter"
+              @click="activeFilter = filter"
               :class="[
                 'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
-                activeFilter === filter.value 
+                activeFilter === filter 
                   ? 'bg-white text-przyciskiNiebieski shadow-sm' 
                   : 'text-gray-500 hover:text-gray-700'
               ]"
             >
-              {{ filter.label }}
+              {{ filter }}
             </button>
           </div>
 
@@ -42,7 +42,7 @@
             <input 
               v-model="searchQuery"
               type="text" 
-              placeholder="Szukaj po tytule..." 
+              placeholder="Szukaj po ID lub tytule..." 
               class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski"
             />
             <span class="absolute left-3 top-2.5 text-gray-400">
@@ -66,7 +66,7 @@
           >
             <div class="bg-przyciskiNiebieski text-white px-6 py-3 flex justify-between items-center">
               <span class="font-medium">{{ ticket.title }}</span>
-              <span class="text-xs font-mono opacity-80">ID: {{ ticket.id }}</span>
+                <span class="text-xs font-mono opacity-80">ID: {{ ticket.publicId }}</span>
             </div>
             
             <div class="p-6 bg-white">
@@ -78,13 +78,35 @@
                 <span :class="getPriorityClass(ticket.priority)" class="px-3 py-1 rounded-full">
                   {{ ticket.priority }}
                 </span>
-                <span :class="getStatusClass(ticket.status)" class="px-3 py-1 rounded-full">
-                  {{ ticket.status }}
+                <span :class="getStatusClass(getNormalizedStatus(ticket.status))" class="px-3 py-1 rounded-full">
+                  {{ getNormalizedStatus(ticket.status) }}
                 </span>
                 <span class="text-gray-400">
                   {{ formatDate(ticket.createdAt) }}
                 </span>
               </div>
+            </div>
+
+            <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-100">
+              <button
+                @click="router.push({ name: 'ticket-details', params: { id: ticket.id } })"
+                class="flex items-center gap-2 px-5 py-2 bg-white text-[#3B71A3] border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#3B71A3] hover:text-white hover:border-[#3B71A3] transition-all active:scale-95 cursor-pointer shadow-sm"
+              >
+                <span>Zobacz szczegóły</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M5 12h14m-7-7 7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -94,55 +116,48 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import axios from 'axios'
 
 const router = useRouter()
 const userStore = useUserStore()
 
-const filters = [
-  { label: 'Wszystkie', value: 'all' },
-  { label: 'Otwarte', value: 'open' },
-  { label: 'W trakcie', value: 'in_progress' },
-  { label: 'Zakończone', value: 'closed' }
-]
+const filters = ['Wszystkie', 'W toku', 'Zakończone']
 
-const activeFilter = ref('all')
+const activeFilter = ref('Wszystkie')
 const searchQuery = ref('')
+const tickets = ref([])
 
-// Przykładowe dane - do zastąpienia z backendu
-const tickets = ref([
-  { 
-    id: 'TK-001', 
-    title: 'Problem z drukarką', 
-    description: 'Drukarka nie drukuje w biurze',
-    type: 'Incydent',
-    priority: 'Wysoki',
-    status: 'Otwarte',
-    createdAt: '2024-01-15'
-  },
-  { 
-    id: 'TK-002', 
-    title: 'Nowy laptop', 
-    description: 'Prośba o nowy sprzęt',
-    type: 'Wniosek',
-    priority: 'Średni',
-    status: 'W trakcie',
-    createdAt: '2024-01-20'
+const axiosConfig = { withCredentials: true }
+
+const fetchMyTickets = async () => {
+  try {
+    const response = await axios.get('/api/ticket', axiosConfig)
+    tickets.value = Array.isArray(response.data) ? response.data : []
+  } catch (error) {
+    console.error('Błąd podczas pobierania zgłoszeń:', error)
+    tickets.value = []
   }
-])
+}
+
+onMounted(() => {
+  fetchMyTickets()
+})
 
 const filteredTickets = computed(() => {
   return tickets.value.filter(ticket => {
-    if (activeFilter.value === 'open' && ticket.status !== 'Otwarte') return false
-    if (activeFilter.value === 'in_progress' && ticket.status !== 'W trakcie') return false
-    if (activeFilter.value === 'closed' && !['Zakończone', 'Rozwiązane'].includes(ticket.status)) return false
+    const normalizedStatus = getNormalizedStatus(ticket.status)
+
+    if (activeFilter.value === 'W toku' && normalizedStatus !== 'W toku') return false
+    if (activeFilter.value === 'Zakończone' && normalizedStatus !== 'Rozwiązane') return false
     
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
-      return ticket.title.toLowerCase().includes(query) || 
-             ticket.id.toLowerCase().includes(query)
+      const title = (ticket.title || '').toLowerCase()
+      const publicId = (ticket.publicId || '').toLowerCase()
+      return title.includes(query) || publicId.includes(query)
     }
     
     return true
@@ -159,12 +174,19 @@ const getPriorityClass = (priority) => {
   return classes[priority] || 'bg-gray-100 text-gray-700'
 }
 
+const getNormalizedStatus = (status) => {
+  const normalized = (status || '').trim().toLowerCase()
+
+  if (normalized === 'nowy') return 'Nowy'
+  if (normalized === 'rozwiązane' || normalized === 'rozwiazane') return 'Rozwiązane'
+  return 'W toku'
+}
+
 const getStatusClass = (status) => {
   const classes = {
-    'Otwarte': 'bg-green-100 text-green-700',
-    'W trakcie': 'bg-blue-100 text-blue-700',
+    'Nowy': 'bg-green-100 text-green-700',
+    'W toku': 'bg-blue-100 text-blue-700',
     'Rozwiązane': 'bg-gray-100 text-gray-700',
-    'Zakończone': 'bg-gray-100 text-gray-700'
   }
   return classes[status] || 'bg-gray-100 text-gray-700'
 }
