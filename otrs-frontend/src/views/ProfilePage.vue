@@ -45,7 +45,7 @@
             </div>
 
             <button
-              @click="router.push({ name: 'problemReportClient' })"
+              @click="goToCreateTicket"
               class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-sm cursor-pointer active:scale-95"
             >
               <svg
@@ -293,4 +293,13 @@ const IconUserLarge = () =>
       h('circle', { cx: '12', cy: '7', r: '4' }),
     ],
   )
+
+const goToCreateTicket = () => {
+  const u = userStore.user
+  if (u?.roles?.includes('Helpdesk') || u?.roles?.includes('Admin') || u?.roles?.includes('Technik')) {
+    router.push({ name: 'problemReportHelpdesk' })
+  } else {
+    router.push({ name: 'problemReportClient' })
+  }
+}
 </script>

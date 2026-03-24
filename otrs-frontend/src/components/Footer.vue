@@ -9,7 +9,7 @@
         </h3>
         <ul class="space-y-4 text-gray-400 text-sm font-medium text-center md:text-left whitespace-nowrap">
           <li><router-link :to="{ name: 'dashboard' }" class="hover:text-white transition">Dashboard</router-link></li>
-          <li><router-link :to="{ name: 'problemReportClient' }" class="hover:text-white transition">Załóż zgłoszenie</router-link></li>
+          <li><router-link :to="{ name: ticketRouteName }" class="hover:text-white transition">Załóż zgłoszenie</router-link></li>
           <li><router-link :to="{ name: 'problemReportHelpdesk' }" class="hover:text-white transition">Widok zgłoszeń</router-link></li>
         </ul>
       </div>
@@ -56,4 +56,16 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+
+const ticketRouteName = computed(() => {
+  const user = userStore.user
+  if (user?.roles?.includes('Helpdesk') || user?.roles?.includes('Admin') || user?.roles?.includes('Technik')) {
+    return 'problemReportHelpdesk'
+  }
+  return 'problemReportClient'
+})
 </script>

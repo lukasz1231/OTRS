@@ -129,7 +129,7 @@ const userName = computed(() => {
 
 const createTicket = () => {
   const user = userStore.user
-  if (user?.roles?.includes('Helpdesk') || user?.roles?.includes('Admin')) {
+  if (user?.roles?.includes('Helpdesk') || user?.roles?.includes('Admin') || user?.roles?.includes('Technik')) {
     router.push({ name: 'problemReportHelpdesk' })
   } else {
     router.push({ name: 'problemReportClient' })

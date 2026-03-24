@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using otrs_backend.Data;
 using otrs_backend.Models;
 using otrs_backend.Requests;
@@ -56,16 +56,21 @@ namespace otrs_backend.Services
 
             var publicId = await GeneratePublicIdAsync();
 
+            var queueId = request.QueueId > 0
+                ? request.QueueId.Value
+                : (await _context.Ques.FirstOrDefaultAsync())?.Id
+                  ?? throw new Exception("Brak dostępnych kolejek w systemie.");
+
             var ticket = new Ticket
             {
                 PublicId = publicId,
                 Title = request.Title,
                 Description = request.Description,
-                ClientId = request.ClientId, // POPRAWKA: używamy ID z modelu Client
+                ClientId = request.ClientId > 0 ? request.ClientId : null,
                 CategoryId = request.CategoryId,
                 PriorityId = request.PriorityId,
                 TypeId = request.TypeId,
-                QueueId = request.QueueId,
+                QueueId = queueId,
                 CreatorId = creatorId,
                 StatusId = initialStatus.Id,
                 CreatedAt = DateTime.UtcNow

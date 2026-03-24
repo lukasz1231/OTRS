@@ -79,6 +79,7 @@ namespace otrs_backend.Controllers
         #region Zarządzanie Kolejkami (Queues)
 
         [HttpGet("queues")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetQueues()
         {
             return Ok(await _context.Ques.Select(q => new { q.Id, q.Name, UserCount = q.Users.Count }).ToListAsync());
@@ -199,6 +200,7 @@ namespace otrs_backend.Controllers
         #region Zarządzanie Kategoriami (Services)
 
         [HttpGet("categories")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetCategories() => Ok(await _context.Categories.ToListAsync());
 
         [HttpGet("categories-all")]
@@ -258,6 +260,7 @@ namespace otrs_backend.Controllers
         #region Zarządzanie Priorytetami
 
         [HttpGet("priorities")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetPriorities() => Ok(await _context.Priorities.OrderByDescending(p => p.Level).ToListAsync());
 
         [HttpPost("priorities")]
@@ -300,6 +303,7 @@ namespace otrs_backend.Controllers
         #region Zarządzanie Klientami
 
         [HttpGet("clients")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetClients() => Ok(await _context.Clients.ToListAsync());
 
         [HttpPost("clients")]
@@ -337,6 +341,7 @@ namespace otrs_backend.Controllers
         #endregion
 
         [HttpGet("types")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetTypes() 
         {
             return Ok(await _context.Types.ToListAsync());

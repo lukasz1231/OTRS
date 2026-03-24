@@ -442,7 +442,7 @@ const handleSubmit = async () => {
     // 4. Przekierowanie na podstawie ról, ale wyciąganych bezpiecznie z Pinii, a nie z tokena!
     const userRoles = data.user.roles || []
 
-    if (userRoles.includes('Helpdesk') || userRoles.includes('Admin')) {
+    if (userRoles.includes('Helpdesk') || userRoles.includes('Admin') || userRoles.includes('Technik')) {
       router.push({ name: 'problemReportHelpdesk' })
     } else {
       router.push({ name: 'problemReportClient' })
