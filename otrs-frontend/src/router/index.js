@@ -36,131 +36,138 @@ routes: [
       path: '/login',
       name: 'login',
       component: LoginRegisterPage,
-      meta: { requiresGuest: true } 
+      meta: { requiresGuest: true, title: 'Logowanie – OTRS' }
     },
     {
       path: '/register',
       name: 'register',
       component: LoginRegisterPage,
-      meta: { requiresGuest: true } 
+      meta: { requiresGuest: true, title: 'Rejestracja – OTRS' }
     },
     {
       path: '/forgot-password',
       name: 'forgot-password',
       component: ForgotPasswordPage,
-      meta: { requiresGuest: true } 
+      meta: { requiresGuest: true, title: 'Resetowanie hasła – OTRS' }
     },
     {
       path: '/reset-password',
       name: 'reset-password',
       component: ResetPasswordPage,
+      meta: { title: 'Nowe hasło – OTRS' }
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: Dashboard,
-      meta: { requiresAuth: true } 
+      meta: { requiresAuth: true, title: 'Dashboard – OTRS' }
     },
     {
       path: '/problemReportHelpdesk',
       name: 'problemReportHelpdesk',
       component: ProblemReportHelpdesk,
-      meta: { requiresAuth: true } 
+      meta: { requiresAuth: true, title: 'Nowe zgłoszenie (Helpdesk) – OTRS' }
     },
     {
       path: '/problemReportClient',
       name: 'problemReportClient',
       component: ProblemReportClient,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, title: 'Nowe zgłoszenie – OTRS' }
     },
     {
       path: '/profile',
       name: 'profile',
       component: ProfilePage,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, title: 'Profil – OTRS' }
     },
     {
       path: '/privacy',
       name: 'privacy',
       component: PrivacyPage,
+      meta: { title: 'Polityka prywatności – OTRS' }
     },
     {
       path: '/terms',
       name: 'terms',
       component: TermsPage,
+      meta: { title: 'Regulamin – OTRS' }
     },
     {
       path: '/trademark',
       name: 'trademark',
       component: TrademarksPage,
+      meta: { title: 'Znaki towarowe – OTRS' }
     },
     {
       path: '/about',
       name: 'about',
       component: AboutPage,
+      meta: { title: 'O systemie – OTRS' }
     },
     {
       path: '/contact',
       name: 'contact',
       component: ContactPage,
+      meta: { title: 'Kontakt – OTRS' }
     },
     {
       path: '/',
       redirect: '/dashboard'
     },
-   {
+    {
       path: '/admin',
       name: 'admin',
       component: AdminDashboard,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Administracja – OTRS' }
     },
     {
       path: '/admin/users',
       name: 'admin-users',
       component: AdminUsers,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Użytkownicy – OTRS' }
     },
     {
       path: '/admin/queues',
       name: 'admin-queues',
       component: AdminQueues,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Kolejki – OTRS' }
     },
     {
       path: '/admin/statuses',
       name: 'admin-statuses',
       component: AdminStatuses,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Statusy – OTRS' }
     },
     {
       path: '/admin/priorities',
       name: 'admin-priorities',
       component: AdminPriorities,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Priorytety – OTRS' }
     },
     {
       path: '/admin/categories',
       name: 'admin-categories',
       component: AdminCategories,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Kategorie – OTRS' }
     },
     {
       path: '/admin/clietns',
       name: 'admin-clients',
       component: AdminClients,
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Klienci – OTRS' }
     },
     {
       path: '/ticket/:id',
       name: 'ticket-details',
       component: () => import('../views/TicketDetailsView.vue'),
-      props: true
+      props: true,
+      meta: { title: 'Szczegóły zgłoszenia – OTRS' }
     },
     {
       path: '/my-tickets',
       name: 'myTickets',
       component: MyTickets,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, title: 'Moje zgłoszenia – OTRS' }
     }
   ],
 })
@@ -188,6 +195,10 @@ router.beforeEach(async (to, from, next) => {
     return next({ name: 'dashboard' })
   }
   next()
+})
+
+router.afterEach((to) => {
+  document.title = to.meta?.title ?? 'OTRS'
 })
 
 export default router
