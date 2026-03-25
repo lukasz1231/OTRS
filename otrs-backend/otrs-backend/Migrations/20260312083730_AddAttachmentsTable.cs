@@ -9,7 +9,6 @@ namespace otrs_backend.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // ZOSTAWILIŚMY TYLKO TO:
             migrationBuilder.CreateTable(
                 name: "Attachments",
                 columns: table => new
@@ -41,7 +40,6 @@ namespace otrs_backend.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // TUTAJ TEŻ CZYŚCIMY - zostawiamy tylko usuwanie załączników
             migrationBuilder.DropTable(
                 name: "Attachments");
         }

@@ -128,8 +128,10 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
+const router = useRouter()
 const API_BASE_URL = 'https://localhost:7054/api/Admin'
 const axiosConfig = { withCredentials: true }
 
@@ -154,15 +156,15 @@ onMounted(async () => {
     const [resTypes, resPrios, resCats] = await Promise.all([
       axios.get(`${API_BASE_URL}/types`, axiosConfig),
       axios.get(`${API_BASE_URL}/priorities`, axiosConfig),
-      axios.get(`${API_BASE_URL}/categories`, axiosConfig)
+      axios.get(`${API_BASE_URL}/categories`, axiosConfig),
     ])
 
-    types.value = resTypes.data.map(t => ({ id: t.id || t.Id, name: t.name || t.Name }))
-    priorities.value = resPrios.data.map(p => ({ id: p.id || p.Id, name: p.name || p.Name }))
-    categories.value = resCats.data.map(c => ({ id: c.id || c.Id, name: c.name || c.Name }))
+    types.value = resTypes.data.map((t) => ({ id: t.id || t.Id, name: t.name || t.Name }))
+    priorities.value = resPrios.data.map((p) => ({ id: p.id || p.Id, name: p.name || p.Name }))
+    categories.value = resCats.data.map((c) => ({ id: c.id || c.Id, name: c.name || c.Name }))
   } catch (error) {
-    console.error("Błąd ładowania danych słownikowych:", error)
-    errorMessage.value = "Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API."
+    console.error('Błąd ładowania danych słownikowych:', error)
+    errorMessage.value = 'Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API.'
   }
 })
 
@@ -175,9 +177,11 @@ const submitTicket = async () => {
     const payload = {
       Title: form.title,
       Description: form.description,
+      Client: 'Hustletrack ITSM', // Przykładowy klient
       TypeId: Number(form.typeId),
       PriorityId: Number(form.priorityId),
       CategoryId: Number(form.categoryId),
+      QueueId: 1, // Domyślna kolejka
     }
 
     const response = await fetch('/api/ticket', {
@@ -194,8 +198,14 @@ const submitTicket = async () => {
       throw new Error(errorData.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.')
     }
 
-    successMessage.value = 'Zgłoszenie zostało pomyślnie utworzone!'
-    resetForm()
+    const createdTicket = await response.json()
+
+    successMessage.value =
+      'Zgłoszenie zostało pomyślnie utworzone! Za chwilę zostaniesz przekierowany.'
+
+    setTimeout(() => {
+      router.push(`/ticket/${createdTicket.id}`)
+    }, 4000)
   } catch (error) {
     errorMessage.value = error.message
   } finally {
@@ -203,15 +213,15 @@ const submitTicket = async () => {
   }
 }
 
-const resetForm = () => {
-  form.title = ''
-  form.description = ''
-  form.typeId = ''
-  form.priorityId = ''
-  form.categoryId = ''
-}
+// const resetForm = () => {
+//   form.title = ''
+//   form.description = ''
+//   form.typeId = ''
+//   form.priorityId = ''
+//   form.categoryId = ''
+// }
 
 const cancel = () => {
-  resetForm()
+  router.back()
 }
 </script>

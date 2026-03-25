@@ -48,7 +48,9 @@
               @change="handleClientChange"
               required
               class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-tekstSzaryCiemny focus:outline-none focus:border-przyciskiNiebieski focus:ring-1 focus:ring-przyciskiNiebieski bg-transparent appearance-none bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.2em_1.2em]"
-              style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%237392A7\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e');"
+              style="
+                background-image: url(&quot;data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237392A7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e&quot;);
+              "
             >
               <option value="" disabled>Wybierz klienta</option>
               <option v-for="client in clients" :key="client.id" :value="client.id">
@@ -65,7 +67,9 @@
               v-model="form.typeId"
               required
               class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-tekstSzaryCiemny focus:outline-none focus:border-przyciskiNiebieski focus:ring-1 focus:ring-przyciskiNiebieski bg-transparent appearance-none bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.2em_1.2em]"
-              style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%237392A7\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e');"
+              style="
+                background-image: url(&quot;data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237392A7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e&quot;);
+              "
             >
               <option value="" disabled>Wybierz typ</option>
               <option v-for="t in types" :key="t.id" :value="t.id">
@@ -82,7 +86,9 @@
               v-model="form.priorityId"
               required
               class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-tekstSzaryCiemny focus:outline-none focus:border-przyciskiNiebieski focus:ring-1 focus:ring-przyciskiNiebieski bg-transparent appearance-none bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.2em_1.2em]"
-              style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%237392A7\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e');"
+              style="
+                background-image: url(&quot;data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237392A7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e&quot;);
+              "
             >
               <option value="" disabled>Wybierz priorytet</option>
               <option v-for="priority in priorities" :key="priority.id" :value="priority.id">
@@ -100,12 +106,18 @@
               :disabled="!form.clientId"
               required
               class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-tekstSzaryCiemny focus:outline-none focus:border-przyciskiNiebieski focus:ring-1 focus:ring-przyciskiNiebieski bg-transparent appearance-none bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.2em_1.2em] disabled:opacity-50"
-              style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%237392A7\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e');"
+              style="
+                background-image: url(&quot;data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237392A7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e&quot;);
+              "
             >
               <option value="" disabled>
                 {{ form.clientId ? 'Wybierz kategorię' : 'Najpierw wybierz klienta' }}
               </option>
-              <option v-for="category in filteredCategories" :key="category.id" :value="category.id">
+              <option
+                v-for="category in filteredCategories"
+                :key="category.id"
+                :value="category.id"
+              >
                 {{ category.name }}
               </option>
             </select>
@@ -120,7 +132,9 @@
             v-model="form.queueId"
             required
             class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-tekstSzaryCiemny focus:outline-none focus:border-przyciskiNiebieski focus:ring-1 focus:ring-przyciskiNiebieski bg-transparent appearance-none bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.2em_1.2em]"
-            style="background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%237392A7\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e');"
+            style="
+              background-image: url(&quot;data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237392A7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e&quot;);
+            "
           >
             <option value="" disabled>Wybierz kolejkę</option>
             <option v-for="queue in queues" :key="queue.id" :value="queue.id">
@@ -161,8 +175,10 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
+const router = useRouter()
 const API_BASE_URL = 'https://localhost:7054/api/Admin'
 const axiosConfig = { withCredentials: true }
 
@@ -195,32 +211,31 @@ onMounted(async () => {
       axios.get(`${API_BASE_URL}/priorities`, axiosConfig),
       axios.get(`${API_BASE_URL}/categories`, axiosConfig),
       axios.get(`${API_BASE_URL}/queues`, axiosConfig),
-      axios.get(`${API_BASE_URL}/clients`, axiosConfig) // Dodany endpoint dla klientów
+      axios.get(`${API_BASE_URL}/clients`, axiosConfig), // Dodany endpoint dla klientów
     ])
 
     // Mapowanie danych (obsługa PascalCase i camelCase)
-    types.value = resTypes.data.map(t => ({ id: t.id || t.Id, name: t.name || t.Name }))
-    priorities.value = resPrios.data.map(p => ({ id: p.id || p.Id, name: p.name || p.Name }))
-    queues.value = resQueues.data.map(q => ({ id: q.id || q.Id, name: q.name || q.Name }))
-    clients.value = resClients.data.map(cl => ({ id: cl.id || cl.Id, name: cl.name || cl.Name }))
-    
-    // Ważne: kategorie muszą mieć teraz clientId
-    allCategories.value = resCats.data.map(c => ({ 
-      id: c.id || c.Id, 
-      name: c.name || c.Name, 
-      clientId: c.clientId || c.ClientId 
-    }))
+    types.value = resTypes.data.map((t) => ({ id: t.id || t.Id, name: t.name || t.Name }))
+    priorities.value = resPrios.data.map((p) => ({ id: p.id || p.Id, name: p.name || p.Name }))
+    queues.value = resQueues.data.map((q) => ({ id: q.id || q.Id, name: q.name || q.Name }))
+    clients.value = resClients.data.map((cl) => ({ id: cl.id || cl.Id, name: cl.name || cl.Name }))
 
+    // Ważne: kategorie muszą mieć teraz clientId
+    allCategories.value = resCats.data.map((c) => ({
+      id: c.id || c.Id,
+      name: c.name || c.Name,
+      clientId: c.clientId || c.ClientId,
+    }))
   } catch (error) {
-    console.error("Błąd ładowania danych słownikowych:", error)
-    errorMessage.value = "Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API."
+    console.error('Błąd ładowania danych słownikowych:', error)
+    errorMessage.value = 'Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API.'
   }
 })
 
 // LOGIKA FILTROWANIA KATEGORII NA PODSTAWIE WYBRANEGO ID KLIENTA
 const filteredCategories = computed(() => {
   if (!form.clientId) return []
-  return allCategories.value.filter(cat => cat.clientId === form.clientId)
+  return allCategories.value.filter((cat) => cat.clientId === form.clientId)
 })
 
 // RESET KATEGORII PRZY ZMIANIE KLIENTA
@@ -230,7 +245,7 @@ const handleClientChange = () => {
 
 const submitTicket = async () => {
   if (isSubmitting.value) return
-  
+
   isSubmitting.value = true
   errorMessage.value = ''
   successMessage.value = ''
@@ -249,28 +264,34 @@ const submitTicket = async () => {
     // Wysyłka do TicketController
     await axios.post('https://localhost:7054/api/Ticket', payload, axiosConfig)
 
-    successMessage.value = 'Zgłoszenie zostało pomyślnie utworzone!'
-    resetForm()
+    const createdTicket = await response.json()
+
+    successMessage.value =
+      'Zgłoszenie zostało pomyślnie utworzone! Za chwilę zostaniesz przekierowany.'
+
+    setTimeout(() => {
+      router.push(`/ticket/${createdTicket.id}`)
+    }, 4000)
   } catch (error) {
     console.error(error)
-    errorMessage.value = error.response?.data?.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.'
+    errorMessage.value =
+      error.response?.data?.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.'
   } finally {
     isSubmitting.value = false
   }
 }
 
-const resetForm = () => {
-  form.title = ''
-  form.description = ''
-  form.clientId = ''
-  form.typeId = ''
-  form.priorityId = ''
-  form.categoryId = ''
-  form.queueId = ''
-}
+// const resetForm = () => {
+//   form.title = ''
+//   form.description = ''
+//   form.client = ''
+//   form.typeId = ''
+//   form.priorityId = ''
+//   form.categoryId = ''
+//   form.queueId = ''
+// }
 
 const cancel = () => {
-  resetForm()
-  // opcjonalnie: $router.back()
+  router.back()
 }
 </script>
