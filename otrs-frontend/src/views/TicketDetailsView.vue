@@ -121,7 +121,7 @@
                 Treść zgłoszenia
               </h3>
               <div
-                class="text-gray-700 leading-relaxed whitespace-pre-wrap text-base md:text-lg italic font-medium"
+                class="text-gray-700 leading-relaxed whitespace-pre-wrap text-base md:text-lg italic font-medium break-all"
               >
                 "{{ ticket.description }}"
               </div>
@@ -181,7 +181,7 @@
                   <div
                     class="bg-gray-50 rounded-2xl rounded-tl-none p-4 text-sm text-gray-700 border border-gray-200 max-w-[90%] md:max-w-[85%] shadow-sm"
                   >
-                    <div class="whitespace-pre-wrap">{{ comment.content }}</div>
+                    <div class="whitespace-pre-wrap break-words">{{ comment.content }}</div>
 
                     <div
                       v-if="comment.attachments && comment.attachments.length > 0"

@@ -166,6 +166,9 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const form = reactive({
   title: '',
@@ -234,8 +237,14 @@ const submitTicket = async () => {
       throw new Error(errorData.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.')
     }
 
-    successMessage.value = 'Zgłoszenie zostało pomyślnie utworzone!'
-    resetForm()
+    const createdTicket = await response.json()
+
+    successMessage.value =
+      'Zgłoszenie zostało pomyślnie utworzone! Za chwilę zostaniesz przekierowany.'
+
+    setTimeout(() => {
+      router.push(`/ticket/${createdTicket.id}`)
+    }, 4000)
   } catch (error) {
     errorMessage.value = error.message
   } finally {
@@ -243,17 +252,17 @@ const submitTicket = async () => {
   }
 }
 
-const resetForm = () => {
-  form.title = ''
-  form.description = ''
-  form.client = ''
-  form.typeId = ''
-  form.priorityId = ''
-  form.categoryId = ''
-  form.queueId = ''
-}
+// const resetForm = () => {
+//   form.title = ''
+//   form.description = ''
+//   form.client = ''
+//   form.typeId = ''
+//   form.priorityId = ''
+//   form.categoryId = ''
+//   form.queueId = ''
+// }
 
 const cancel = () => {
-  resetForm()
+  router.back()
 }
 </script>

@@ -141,7 +141,7 @@
                       Opis zgłoszenia
                     </p>
                     <p
-                      class="leading-relaxed text-gray-100 bg-black/10 p-3 rounded-lg min-h-[60px]"
+                      class="leading-relaxed text-gray-100 bg-black/10 p-3 rounded-lg min-h-[60px] break-words"
                     >
                       {{ ticket.description }}
                     </p>

@@ -128,6 +128,9 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const form = reactive({
   title: '',
@@ -165,9 +168,11 @@ const submitTicket = async () => {
     const payload = {
       Title: form.title,
       Description: form.description,
+      Client: 'Hustletrack ITSM', // Przykładowy klient
       TypeId: Number(form.typeId),
       PriorityId: Number(form.priorityId),
       CategoryId: Number(form.categoryId),
+      QueueId: 1, // Domyślna kolejka
     }
 
     const response = await fetch('/api/ticket', {
@@ -184,8 +189,14 @@ const submitTicket = async () => {
       throw new Error(errorData.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.')
     }
 
-    successMessage.value = 'Zgłoszenie zostało pomyślnie utworzone!'
-    resetForm()
+    const createdTicket = await response.json()
+
+    successMessage.value =
+      'Zgłoszenie zostało pomyślnie utworzone! Za chwilę zostaniesz przekierowany.'
+
+    setTimeout(() => {
+      router.push(`/ticket/${createdTicket.id}`)
+    }, 4000)
   } catch (error) {
     errorMessage.value = error.message
   } finally {
@@ -193,15 +204,15 @@ const submitTicket = async () => {
   }
 }
 
-const resetForm = () => {
-  form.title = ''
-  form.description = ''
-  form.typeId = ''
-  form.priorityId = ''
-  form.categoryId = ''
-}
+// const resetForm = () => {
+//   form.title = ''
+//   form.description = ''
+//   form.typeId = ''
+//   form.priorityId = ''
+//   form.categoryId = ''
+// }
 
 const cancel = () => {
-  resetForm()
+  router.back()
 }
 </script>
