@@ -44,7 +44,8 @@
               Klient <span class="text-orange-500">*</span>
             </label>
             <select
-              v-model="form.client"
+              v-model="form.clientId"
+              @change="handleClientChange"
               required
               class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-tekstSzaryCiemny focus:outline-none focus:border-przyciskiNiebieski focus:ring-1 focus:ring-przyciskiNiebieski bg-transparent appearance-none bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.2em_1.2em]"
               style="
@@ -52,7 +53,7 @@
               "
             >
               <option value="" disabled>Wybierz klienta</option>
-              <option v-for="client in clients" :key="client.id" :value="client.name">
+              <option v-for="client in clients" :key="client.id" :value="client.id">
                 {{ client.name }}
               </option>
             </select>
@@ -102,19 +103,27 @@
             </label>
             <select
               v-model="form.categoryId"
+              :disabled="!form.clientId"
               required
-              class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-tekstSzaryCiemny focus:outline-none focus:border-przyciskiNiebieski focus:ring-1 focus:ring-przyciskiNiebieski bg-transparent appearance-none bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.2em_1.2em]"
+              class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-tekstSzaryCiemny focus:outline-none focus:border-przyciskiNiebieski focus:ring-1 focus:ring-przyciskiNiebieski bg-transparent appearance-none bg-no-repeat bg-[position:right_1rem_center] bg-[length:1.2em_1.2em] disabled:opacity-50"
               style="
                 background-image: url(&quot;data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237392A7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e&quot;);
               "
             >
-              <option value="" disabled>Wybierz kategorię</option>
-              <option v-for="category in categories" :key="category.id" :value="category.id">
+              <option value="" disabled>
+                {{ form.clientId ? 'Wybierz kategorię' : 'Najpierw wybierz klienta' }}
+              </option>
+              <option
+                v-for="category in filteredCategories"
+                :key="category.id"
+                :value="category.id"
+              >
                 {{ category.name }}
               </option>
             </select>
           </div>
         </div>
+
         <div>
           <label class="block text-sm font-semibold text-tekstSzaryCiemny mb-2">
             Kolejka <span class="text-orange-500">*</span>
@@ -165,15 +174,18 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
+const API_BASE_URL = 'https://localhost:7054/api/Admin'
+const axiosConfig = { withCredentials: true }
 
 const form = reactive({
   title: '',
   description: '',
-  client: '',
+  clientId: '', // Zmienione z 'client' na 'clientId' (int)
   typeId: '',
   priorityId: '',
   categoryId: '',
@@ -184,30 +196,56 @@ const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
-const clients = ref([
-  { id: 1, name: 'Hustletrack ITSM' },
-  { id: 2, name: 'Klient Zewnętrzny Sp. z o.o.' },
-])
-const types = ref([
-  { id: 1, name: 'Incydent' },
-  { id: 2, name: 'Wniosek o usługę' },
-])
-const priorities = ref([
-  { id: 1, name: 'Niski' },
-  { id: 2, name: 'Średni' },
-  { id: 3, name: 'Wysoki' },
-  { id: 4, name: 'Krytyczny' },
-])
-const categories = ref([
-  { id: 1, name: 'Sprzęt' },
-  { id: 2, name: 'Oprogramowanie' },
-])
-const queues = ref([
-  { id: 1, name: 'Helpdesk L1' },
-  { id: 2, name: 'Administratorzy' },
-])
+// REF-y NA DANE Z BAZY
+const clients = ref([])
+const types = ref([])
+const priorities = ref([])
+const allCategories = ref([])
+const queues = ref([])
+
+// POBIERANIE WSZYSTKIEGO Z BAZY PRZY STARCIE
+onMounted(async () => {
+  try {
+    const [resTypes, resPrios, resCats, resQueues, resClients] = await Promise.all([
+      axios.get(`${API_BASE_URL}/types`, axiosConfig),
+      axios.get(`${API_BASE_URL}/priorities`, axiosConfig),
+      axios.get(`${API_BASE_URL}/categories`, axiosConfig),
+      axios.get(`${API_BASE_URL}/queues`, axiosConfig),
+      axios.get(`${API_BASE_URL}/clients`, axiosConfig), // Dodany endpoint dla klientów
+    ])
+
+    // Mapowanie danych (obsługa PascalCase i camelCase)
+    types.value = resTypes.data.map((t) => ({ id: t.id || t.Id, name: t.name || t.Name }))
+    priorities.value = resPrios.data.map((p) => ({ id: p.id || p.Id, name: p.name || p.Name }))
+    queues.value = resQueues.data.map((q) => ({ id: q.id || q.Id, name: q.name || q.Name }))
+    clients.value = resClients.data.map((cl) => ({ id: cl.id || cl.Id, name: cl.name || cl.Name }))
+
+    // Ważne: kategorie muszą mieć teraz clientId
+    allCategories.value = resCats.data.map((c) => ({
+      id: c.id || c.Id,
+      name: c.name || c.Name,
+      clientId: c.clientId || c.ClientId,
+    }))
+  } catch (error) {
+    console.error('Błąd ładowania danych słownikowych:', error)
+    errorMessage.value = 'Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API.'
+  }
+})
+
+// LOGIKA FILTROWANIA KATEGORII NA PODSTAWIE WYBRANEGO ID KLIENTA
+const filteredCategories = computed(() => {
+  if (!form.clientId) return []
+  return allCategories.value.filter((cat) => cat.clientId === form.clientId)
+})
+
+// RESET KATEGORII PRZY ZMIANIE KLIENTA
+const handleClientChange = () => {
+  form.categoryId = ''
+}
 
 const submitTicket = async () => {
+  if (isSubmitting.value) return
+
   isSubmitting.value = true
   errorMessage.value = ''
   successMessage.value = ''
@@ -216,26 +254,15 @@ const submitTicket = async () => {
     const payload = {
       Title: form.title,
       Description: form.description,
-      Client: form.client,
+      ClientId: Number(form.clientId),
       TypeId: Number(form.typeId),
       PriorityId: Number(form.priorityId),
       CategoryId: Number(form.categoryId),
       QueueId: Number(form.queueId),
     }
 
-    const response = await fetch('/api/ticket', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.')
-    }
+    // Wysyłka do TicketController
+    await axios.post('https://localhost:7054/api/Ticket', payload, axiosConfig)
 
     const createdTicket = await response.json()
 
@@ -246,7 +273,9 @@ const submitTicket = async () => {
       router.push(`/ticket/${createdTicket.id}`)
     }, 4000)
   } catch (error) {
-    errorMessage.value = error.message
+    console.error(error)
+    errorMessage.value =
+      error.response?.data?.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.'
   } finally {
     isSubmitting.value = false
   }

@@ -8,5 +8,9 @@ namespace otrs_backend.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+
+        // Powiązanie: nazwa klienta musi odpowiadać tej z dropdowna
+        public int? ClientId { get; set; }
+        public Client? Client { get; set; }
     }
 }

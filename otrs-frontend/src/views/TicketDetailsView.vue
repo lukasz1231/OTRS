@@ -47,7 +47,7 @@
 
               <div v-if="canChangeStatus" class="relative">
                 <select
-                  v-model="ticket.status"
+                  v-model="selectedStatusId"
                   @change="updateStatus"
                   :class="[
                     getStatusColor(ticket.status),
@@ -57,7 +57,7 @@
                   <option
                     v-for="statusOption in availableStatuses"
                     :key="statusOption.id"
-                    :value="statusOption.name"
+                    :value="statusOption.id"
                   >
                     {{ statusOption.name }}
                   </option>
@@ -85,6 +85,33 @@
                 ]"
               >
                 {{ ticket.status }}
+              </div>
+            </div>
+
+            <div v-if="canChangeStatus" class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              <div class="flex flex-col gap-1">
+                <label class="text-[10px] font-bold text-gray-400 uppercase">Priorytet</label>
+                <select v-model="selectedPriorityId" @change="updatePriority" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                  <option v-for="priorityOption in availablePriorities" :key="priorityOption.id" :value="priorityOption.id">
+                    {{ priorityOption.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-[10px] font-bold text-gray-400 uppercase">Kategoria</label>
+                <select v-model="selectedCategoryId" @change="updateCategory" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                  <option v-for="categoryOption in availableCategories" :key="categoryOption.id" :value="categoryOption.id">
+                    {{ categoryOption.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label class="text-[10px] font-bold text-gray-400 uppercase">Kolejka</label>
+                <select v-model="selectedQueueId" @change="updateQueue" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                  <option v-for="queueOption in availableQueues" :key="queueOption.id" :value="queueOption.id">
+                    {{ queueOption.name }}
+                  </option>
+                </select>
               </div>
             </div>
 
@@ -414,6 +441,14 @@ const selectedFiles = ref([])
 const sending = ref(false)
 const fileInput = ref(null)
 const availableStatuses = ref([])
+const availablePriorities = ref([])
+const availableCategories = ref([])
+const availableQueues = ref([])
+
+const selectedStatusId = ref(null)
+const selectedPriorityId = ref(null)
+const selectedCategoryId = ref(null)
+const selectedQueueId = ref(null)
 
 const userStore = useUserStore()
 
@@ -440,6 +475,11 @@ const fetchTicketDetails = async () => {
       withCredentials: true,
     })
     ticket.value = response.data
+
+    selectedStatusId.value = response.data.statusId
+    selectedPriorityId.value = response.data.priorityId
+    selectedCategoryId.value = response.data.categoryId
+    selectedQueueId.value = response.data.queueId
   } catch (error) {
     console.error('Error fetching ticket details:', error)
   } finally {
@@ -458,20 +498,115 @@ const fetchStatuses = async () => {
   }
 }
 
+const fetchPriorities = async () => {
+  try {
+    const response = await axios.get('https://localhost:7054/api/admin/priorities', {
+      withCredentials: true,
+    })
+    availablePriorities.value = response.data
+  } catch (error) {
+    console.error('Błąd podczas pobierania priorytetów:', error)
+  }
+}
+
+const fetchCategories = async () => {
+  try {
+    const response = await axios.get('https://localhost:7054/api/admin/categories', {
+      withCredentials: true,
+    })
+    availableCategories.value = response.data
+  } catch (error) {
+    console.error('Błąd podczas pobierania kategorii:', error)
+  }
+}
+
+const fetchQueues = async () => {
+  try {
+    const response = await axios.get('https://localhost:7054/api/admin/queues', {
+      withCredentials: true,
+    })
+    availableQueues.value = response.data
+  } catch (error) {
+    console.error('Błąd podczas pobierania kolejek:', error)
+  }
+}
+
 const updateStatus = async () => {
+  if (selectedStatusId.value == null) return
   try {
     await axios.patch(
       `https://localhost:7054/api/ticket/${route.params.id}/status`,
-      { newStatus: ticket.value.status },
+      { newStatusId: selectedStatusId.value },
       {
         withCredentials: true,
         headers: { 'Content-Type': 'application/json' },
       },
     )
+    await fetchTicketDetails()
     console.log('Status zaktualizowany pomyślnie!')
   } catch (error) {
     console.error('Błąd podczas zmiany statusu:', error)
     alert('Nie udało się zmienić statusu.')
+    await fetchTicketDetails()
+  }
+}
+
+const updatePriority = async () => {
+  if (selectedPriorityId.value == null) return
+  try {
+    await axios.patch(
+      `https://localhost:7054/api/ticket/${route.params.id}/priority`,
+      { newPriorityId: selectedPriorityId.value },
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+    await fetchTicketDetails()
+    console.log('Priorytet zaktualizowany pomyślnie!')
+  } catch (error) {
+    console.error('Błąd podczas zmiany priorytetu:', error)
+    alert('Nie udało się zmienić priorytetu.')
+    await fetchTicketDetails()
+  }
+}
+
+const updateCategory = async () => {
+  if (selectedCategoryId.value == null) return
+  try {
+    await axios.patch(
+      `https://localhost:7054/api/ticket/${route.params.id}/category`,
+      { newCategoryId: selectedCategoryId.value },
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+    await fetchTicketDetails()
+    console.log('Kategoria zaktualizowana pomyślnie!')
+  } catch (error) {
+    console.error('Błąd podczas zmiany kategorii:', error)
+    alert('Nie udało się zmienić kategorii.')
+    await fetchTicketDetails()
+  }
+}
+
+const updateQueue = async () => {
+  if (selectedQueueId.value == null) return
+  try {
+    await axios.patch(
+      `https://localhost:7054/api/ticket/${route.params.id}/queue`,
+      { newQueueId: selectedQueueId.value },
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+    await fetchTicketDetails()
+    console.log('Kolejka zaktualizowana pomyślnie!')
+  } catch (error) {
+    console.error('Błąd podczas zmiany kolejki:', error)
+    alert('Nie udało się zmienić kolejki.')
     await fetchTicketDetails()
   }
 }
@@ -560,7 +695,7 @@ onMounted(async () => {
   }
 
   if (canChangeStatus.value) {
-    await fetchStatuses()
+    await Promise.all([fetchStatuses(), fetchPriorities(), fetchCategories(), fetchQueues()])
   }
 })
 </script>

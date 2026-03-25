@@ -82,8 +82,10 @@ builder.Services.AddCors(options =>
         });
 });
 
+
 // Services
 builder.Services.AddScoped<TicketService>();
+builder.Services.AddScoped<UserService>();
 
 
 builder.Services.AddControllers();

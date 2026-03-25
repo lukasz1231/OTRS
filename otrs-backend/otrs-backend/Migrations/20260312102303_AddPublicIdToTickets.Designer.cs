@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using otrs_backend.Data;
 
@@ -10,9 +11,11 @@ using otrs_backend.Data;
 namespace otrs_backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260312102303_AddPublicIdToTickets")]
+    partial class AddPublicIdToTickets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -99,9 +102,6 @@ namespace otrs_backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -111,29 +111,8 @@ namespace otrs_backend.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("otrs_backend.Models.Client", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Clients");
                 });
 
             modelBuilder.Entity("otrs_backend.Models.Comment", b =>
@@ -251,8 +230,9 @@ namespace otrs_backend.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Client")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -288,8 +268,6 @@ namespace otrs_backend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
-
-                    b.HasIndex("ClientId");
 
                     b.HasIndex("CreatorId");
 
@@ -426,15 +404,6 @@ namespace otrs_backend.Migrations
                     b.Navigation("Comment");
                 });
 
-            modelBuilder.Entity("otrs_backend.Models.Category", b =>
-                {
-                    b.HasOne("otrs_backend.Models.Client", "Client")
-                        .WithMany("Categories")
-                        .HasForeignKey("ClientId");
-
-                    b.Navigation("Client");
-                });
-
             modelBuilder.Entity("otrs_backend.Models.Comment", b =>
                 {
                     b.HasOne("otrs_backend.Models.Ticket", "Ticket")
@@ -461,10 +430,6 @@ namespace otrs_backend.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("otrs_backend.Models.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId");
 
                     b.HasOne("otrs_backend.Models.User", "Creator")
                         .WithMany("CreatedTickets")
@@ -498,8 +463,6 @@ namespace otrs_backend.Migrations
 
                     b.Navigation("Category");
 
-                    b.Navigation("Client");
-
                     b.Navigation("Creator");
 
                     b.Navigation("Priority");
@@ -509,11 +472,6 @@ namespace otrs_backend.Migrations
                     b.Navigation("Status");
 
                     b.Navigation("Type");
-                });
-
-            modelBuilder.Entity("otrs_backend.Models.Client", b =>
-                {
-                    b.Navigation("Categories");
                 });
 
             modelBuilder.Entity("otrs_backend.Models.Comment", b =>

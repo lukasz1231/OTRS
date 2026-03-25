@@ -1,41 +1,45 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using otrs_backend.Data;
 using otrs_backend.Models;
 using otrs_backend.Requests;
-using System.Net.Mail;
 
 namespace otrs_backend.Services
 {
     public class AttachmentDto
     {
         public int Id { get; set; }
-        public string FileName { get; set; }
-        public string FilePath { get; set; }
+        public string FileName { get; set; } = default!;
+        public string FilePath { get; set; } = default!;
     }
 
     public class CommentDto
     {
         public int Id { get; set; }
-        public string Content { get; set; }
+        public string Content { get; set; } = default!;
         public DateTime CreatedAt { get; set; }
-        public string UserName { get; set; }
-        public string UserRole { get; set; }
+        public string UserName { get; set; } = default!;
+        public string UserRole { get; set; } = default!;
         public List<AttachmentDto> Attachments { get; set; } = new();
     }
 
     public class TicketDto
     {
         public int Id { get; set; }
-        public string PublicId => $"ZGL-{Id:D5}";
-        public string Title { get; set; }
-        public string Description { get; set; }
+        public string PublicId { get; set; } = default!;
+        public string Title { get; set; } = default!;
+        public string Description { get; set; } = default!;
         public DateTime CreatedAt { get; set; }
-        public string Client { get; set; }
-        public string Status { get; set; }
-        public string Priority { get; set; }
-        public string Category { get; set; }
-        public string Type { get; set; }
-        public string Queue { get; set; }
+        public string Client { get; set; } = default!; // Zwracamy nazwę klienta jako string do frontu
+        public string Status { get; set; } = default!;
+        public int StatusId { get; set; }
+        public string Priority { get; set; } = default!;
+        public int PriorityId { get; set; }
+        public string Category { get; set; } = default!;
+        public int CategoryId { get; set; }
+        public string Type { get; set; } = default!;
+        public int TypeId { get; set; }
+        public string Queue { get; set; } = default!;
+        public int QueueId { get; set; }
         public bool IsMyTicket { get; set; }
         public List<CommentDto> Comments { get; set; } = new();
     }
@@ -55,15 +59,23 @@ namespace otrs_backend.Services
                 .FirstOrDefaultAsync(s => s.Name == "Nowy")
                 ?? throw new Exception("Błąd konfiguracji systemu: Brak statusu 'Nowy' w bazie danych.");
 
+            var publicId = await GeneratePublicIdAsync();
+
+            var queueId = request.QueueId > 0
+                ? request.QueueId.Value
+                : (await _context.Ques.FirstOrDefaultAsync())?.Id
+                  ?? throw new Exception("Brak dostępnych kolejek w systemie.");
+
             var ticket = new Ticket
             {
+                PublicId = publicId,
                 Title = request.Title,
                 Description = request.Description,
-                Client = request.Client,
+                ClientId = request.ClientId > 0 ? request.ClientId : null,
                 CategoryId = request.CategoryId,
                 PriorityId = request.PriorityId,
                 TypeId = request.TypeId,
-                QueueId = request.QueueId,
+                QueueId = queueId,
                 CreatorId = creatorId,
                 StatusId = initialStatus.Id,
                 CreatedAt = DateTime.UtcNow
@@ -75,27 +87,62 @@ namespace otrs_backend.Services
             return ticket;
         }
 
+        private async Task<string> GeneratePublicIdAsync()
+        {
+            var today = DateTime.UtcNow.ToString("yyyyMMdd");
+            var prefix = "PL";
+
+            var lastTicket = await _context.Tickets
+                .Where(t => t.PublicId != null && t.PublicId.StartsWith(prefix + today))
+                .OrderByDescending(t => t.PublicId)
+                .FirstOrDefaultAsync();
+
+            if (lastTicket == null)
+            {
+                return $"{prefix}{today}00001";
+            }
+
+            var lastNumberStr = lastTicket.PublicId.Substring(prefix.Length + today.Length);
+            if (int.TryParse(lastNumberStr, out int lastNumber))
+            {
+                var newNumber = lastNumber + 1;
+                return $"{prefix}{today}{newNumber:D5}";
+            }
+
+            return $"{prefix}{today}00001";
+        }
+
         public async Task<List<TicketDto>> GetMyTicketsAsync(int currentUserId)
         {
-            return await _context.Tickets
+            var userRoles = await GetUserRolesAsync(currentUserId);
+
+            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
+
+            return await visibleTicketsQuery
+                .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
                 .Include(t => t.Status)
                 .Include(t => t.Priority)
                 .Include(t => t.Category)
                 .Include(t => t.Type)
                 .Include(t => t.Queue)
-                .Where(t => t.CreatorId == currentUserId || t.AssignedUsers.Any(u => u.Id == currentUserId))
                 .Select(t => new TicketDto
                 {
                     Id = t.Id,
+                    PublicId = t.PublicId,
                     Title = t.Title,
                     Description = t.Description,
                     CreatedAt = t.CreatedAt,
-                    Client = t.Client,
+                    Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
                     Status = t.Status.Name,
+                    StatusId = t.StatusId,
                     Priority = t.Priority.Name,
+                    PriorityId = t.PriorityId,
                     Category = t.Category.Name,
+                    CategoryId = t.CategoryId,
                     Type = t.Type.Name,
+                    TypeId = t.TypeId,
                     Queue = t.Queue.Name,
+                    QueueId = t.QueueId,
                     IsMyTicket = t.CreatorId == currentUserId
                 })
                 .OrderByDescending(t => t.CreatedAt)
@@ -104,7 +151,12 @@ namespace otrs_backend.Services
 
         public async Task<TicketDto?> GetTicketByIdAsync(int ticketId, int currentUserId)
         {
-            return await _context.Tickets
+            var userRoles = await GetUserRolesAsync(currentUserId);
+
+            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
+
+            return await visibleTicketsQuery
+                .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
                 .Include(t => t.Comments)
                     .ThenInclude(c => c.User)
                 .Include(t => t.Comments)
@@ -115,19 +167,24 @@ namespace otrs_backend.Services
                 .Include(t => t.Type)
                 .Include(t => t.Queue)
                 .Where(t => t.Id == ticketId)
-                .Where(t => t.CreatorId == currentUserId || t.AssignedUsers.Any(u => u.Id == currentUserId))
                 .Select(t => new TicketDto
                 {
                     Id = t.Id,
+                    PublicId = t.PublicId,
                     Title = t.Title,
                     Description = t.Description,
                     CreatedAt = t.CreatedAt,
-                    Client = t.Client,
+                    Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
                     Status = t.Status.Name,
+                    StatusId = t.StatusId,
                     Priority = t.Priority.Name,
+                    PriorityId = t.PriorityId,
                     Category = t.Category.Name,
+                    CategoryId = t.CategoryId,
                     Type = t.Type.Name,
+                    TypeId = t.TypeId,
                     Queue = t.Queue.Name,
+                    QueueId = t.QueueId,
                     IsMyTicket = t.CreatorId == currentUserId,
 
                     Comments = t.Comments.Select(c => new CommentDto
@@ -149,6 +206,41 @@ namespace otrs_backend.Services
                     .ToList()
                 })
                 .FirstOrDefaultAsync();
+        }
+
+        private async Task<HashSet<string>> GetUserRolesAsync(int userId)
+        {
+            var roles = await _context.Users
+                .Where(u => u.Id == userId)
+                .SelectMany(u => u.Roles.Select(r => r.Name))
+                .ToListAsync();
+
+            return roles.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+        private static IQueryable<Ticket> ApplyTicketVisibilityRules(
+            IQueryable<Ticket> query,
+            int currentUserId,
+            HashSet<string> userRoles)
+        {
+            // Admin i Helpdesk widzą wszystkie zgłoszenia
+            if (userRoles.Contains("Admin") || userRoles.Contains("Helpdesk"))
+            {
+                return query;
+            }
+
+            // Technik widzi zgłoszenia przypisane do niego lub znajdujące się w jego kolejkach
+            if (userRoles.Contains("Technik"))
+            {
+                return query.Where(t =>
+                    t.AssignedUsers.Any(u => u.Id == currentUserId) ||
+                    t.Queue.Users.Any(u => u.Id == currentUserId));
+            }
+
+            // Zwykły użytkownik widzi własne zgłoszenia oraz te przypisane do niego.
+            return query.Where(t =>
+                t.CreatorId == currentUserId ||
+                t.AssignedUsers.Any(u => u.Id == currentUserId));
         }
 
         public async Task AddCommentAsync(int ticketId, int userId, string content, IFormFileCollection files)
@@ -192,7 +284,7 @@ namespace otrs_backend.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateStatusAsync(int ticketId, string newStatusName)
+        public async Task UpdateStatusAsync(int ticketId, int newStatusId) // POPRAWKA: przyjmujemy int Id
         {
             var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
             if (ticket == null)
@@ -200,18 +292,55 @@ namespace otrs_backend.Services
                 throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
             }
 
-            var newStatus = await _context.Statuses.FirstOrDefaultAsync(s => s.Name == newStatusName);
-            if (newStatus == null)
+            var statusExists = await _context.Statuses.AnyAsync(s => s.Id == newStatusId);
+            if (!statusExists)
             {
-                throw new Exception($"Status '{newStatusName}' nie istnieje w bazie danych.");
+                throw new Exception($"Status o ID '{newStatusId}' nie istnieje.");
             }
 
-            if (ticket.StatusId == newStatus.Id)
-            {
-                return;
-            }
+            ticket.StatusId = newStatusId;
+            await _context.SaveChangesAsync();
+        }
 
-            ticket.StatusId = newStatus.Id;
+        public async Task UpdatePriorityAsync(int ticketId, int newPriorityId)
+        {
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null)
+                throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
+
+            var exists = await _context.Priorities.AnyAsync(p => p.Id == newPriorityId);
+            if (!exists)
+                throw new Exception($"Priorytet o ID '{newPriorityId}' nie istnieje.");
+
+            ticket.PriorityId = newPriorityId;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateCategoryAsync(int ticketId, int newCategoryId)
+        {
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null)
+                throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
+
+            var exists = await _context.Categories.AnyAsync(c => c.Id == newCategoryId);
+            if (!exists)
+                throw new Exception($"Kategoria o ID '{newCategoryId}' nie istnieje.");
+
+            ticket.CategoryId = newCategoryId;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateQueueAsync(int ticketId, int newQueueId)
+        {
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null)
+                throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
+
+            var exists = await _context.Ques.AnyAsync(q => q.Id == newQueueId);
+            if (!exists)
+                throw new Exception($"Kolejka o ID '{newQueueId}' nie istnieje.");
+
+            ticket.QueueId = newQueueId;
             await _context.SaveChangesAsync();
         }
 

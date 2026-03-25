@@ -120,8 +120,53 @@ namespace otrs_backend.Controllers
         {
             try
             {
-                await _ticketService.UpdateStatusAsync(id, request.NewStatus);
+                await _ticketService.UpdateStatusAsync(id, request.NewStatusId);
                 return Ok(new { message = "Status zaktualizowany pomyślnie." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/priority")]
+        [Authorize(Roles = "Admin,Helpdesk,Technik")]
+        public async Task<IActionResult> ChangeTicketPriority(int id, [FromBody] ChangePriorityRequest request)
+        {
+            try
+            {
+                await _ticketService.UpdatePriorityAsync(id, request.NewPriorityId);
+                return Ok(new { message = "Priorytet zaktualizowany pomyślnie." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/category")]
+        [Authorize(Roles = "Admin,Helpdesk,Technik")]
+        public async Task<IActionResult> ChangeTicketCategory(int id, [FromBody] ChangeCategoryRequest request)
+        {
+            try
+            {
+                await _ticketService.UpdateCategoryAsync(id, request.NewCategoryId);
+                return Ok(new { message = "Kategoria zaktualizowana pomyślnie." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPatch("{id}/queue")]
+        [Authorize(Roles = "Admin,Helpdesk,Technik")]
+        public async Task<IActionResult> ChangeTicketQueue(int id, [FromBody] ChangeQueueRequest request)
+        {
+            try
+            {
+                await _ticketService.UpdateQueueAsync(id, request.NewQueueId);
+                return Ok(new { message = "Kolejka zaktualizowana pomyślnie." });
             }
             catch (Exception ex)
             {
@@ -146,7 +191,19 @@ namespace otrs_backend.Controllers
 
         public class ChangeStatusRequest
         {
-            public string NewStatus { get; set; }
+            public int NewStatusId { get; set; }
+        }
+        public class ChangePriorityRequest
+        {
+            public int NewPriorityId { get; set; }
+        }
+        public class ChangeCategoryRequest
+        {
+            public int NewCategoryId { get; set; }
+        }
+        public class ChangeQueueRequest
+        {
+            public int NewQueueId { get; set; }
         }
     }
 }

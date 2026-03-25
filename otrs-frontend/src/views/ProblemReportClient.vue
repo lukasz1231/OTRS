@@ -127,10 +127,13 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
+const API_BASE_URL = 'https://localhost:7054/api/Admin'
+const axiosConfig = { withCredentials: true }
 
 const form = reactive({
   title: '',
@@ -144,20 +147,26 @@ const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
-const types = ref([
-  { id: 1, name: 'Incydent' },
-  { id: 2, name: 'Wniosek o usługę' },
-])
-const priorities = ref([
-  { id: 1, name: 'Niski' },
-  { id: 2, name: 'Średni' },
-  { id: 3, name: 'Wysoki' },
-  { id: 4, name: 'Krytyczny' },
-])
-const categories = ref([
-  { id: 1, name: 'Sprzęt' },
-  { id: 2, name: 'Oprogramowanie' },
-])
+const types = ref([])
+const priorities = ref([])
+const categories = ref([])
+
+onMounted(async () => {
+  try {
+    const [resTypes, resPrios, resCats] = await Promise.all([
+      axios.get(`${API_BASE_URL}/types`, axiosConfig),
+      axios.get(`${API_BASE_URL}/priorities`, axiosConfig),
+      axios.get(`${API_BASE_URL}/categories`, axiosConfig),
+    ])
+
+    types.value = resTypes.data.map((t) => ({ id: t.id || t.Id, name: t.name || t.Name }))
+    priorities.value = resPrios.data.map((p) => ({ id: p.id || p.Id, name: p.name || p.Name }))
+    categories.value = resCats.data.map((c) => ({ id: c.id || c.Id, name: c.name || c.Name }))
+  } catch (error) {
+    console.error('Błąd ładowania danych słownikowych:', error)
+    errorMessage.value = 'Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API.'
+  }
+})
 
 const submitTicket = async () => {
   isSubmitting.value = true

@@ -8,13 +8,20 @@ namespace otrs_backend.Models
     {
         [Key]
         public int Id { get; set; }
+        
+        [Required]
+        [StringLength(50)]
+        public string PublicId { get; set; }
+        
+        [Required]
         public string Title { get; set; }
         public string Description { get; set; }
         public DateTime CreatedAt { get; set; }
         
         public int CreatorId { get; set; }
         public User Creator { get; set; }
-        public string Client { get; set; }
+        public int? ClientId { get; set; }
+        public Client? Client { get; set; }
         public int CategoryId { get; set; }
         public Category Category { get; set; }
         public int PriorityId { get; set; }
@@ -27,6 +34,5 @@ namespace otrs_backend.Models
         public Que Queue { get; set; }
         public ICollection<User> AssignedUsers { get; set; } = new List<User>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
-
     }
 }

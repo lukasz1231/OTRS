@@ -45,7 +45,7 @@
             </div>
 
             <button
-              @click="router.push({ name: 'problemReportClient' })"
+              @click="goToCreateTicket"
               class="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-sm cursor-pointer active:scale-95"
             >
               <svg
@@ -126,11 +126,11 @@
                 </div>
                 <div
                   :class="[
-                    getStatusColor(ticket.status),
+                    getStatusColor(getNormalizedStatus(ticket.status)),
                     'text-xs px-3 py-1 rounded-full bg-black/10 border border-white/10',
                   ]"
                 >
-                  {{ ticket.status }}
+                  {{ getNormalizedStatus(ticket.status) }}
                 </div>
               </div>
 
@@ -240,11 +240,13 @@ onMounted(() => {
 // Filtrowanie z wyszukiwarką
 const finalFilteredTickets = computed(() => {
   return tickets.value.filter((t) => {
+    const normalizedStatus = getNormalizedStatus(t.status)
+
     let matchesFilter = true
     if (activeFilter.value === 'W toku') {
-      matchesFilter = ['Przyjęte', 'W toku', 'Nowy'].includes(t.status)
+      matchesFilter = normalizedStatus === 'W toku'
     } else if (activeFilter.value === 'Zakończone') {
-      matchesFilter = ['Rozwiązane', 'Zamknięte'].includes(t.status)
+      matchesFilter = normalizedStatus === 'Rozwiązane'
     }
 
     const term = searchQuery.value.toLowerCase()
@@ -257,10 +259,18 @@ const finalFilteredTickets = computed(() => {
   })
 })
 
+const getNormalizedStatus = (status) => {
+  const normalized = (status || '').trim().toLowerCase()
+
+  if (normalized === 'nowy') return 'Nowy'
+  if (normalized === 'rozwiązane' || normalized === 'rozwiazane') return 'Rozwiązane'
+  return 'W toku'
+}
+
 const getStatusColor = (status) => {
-  if (['Rozwiązane', 'Zamknięte'].includes(status)) return 'text-gray-300 underline'
-  if (['W toku'].includes(status)) return 'text-yellow-300 font-bold'
-  if (['Przyjęte', 'Nowy'].includes(status)) return 'text-green-300 font-bold'
+  if (status === 'Rozwiązane') return 'text-gray-300 underline'
+  if (status === 'W toku') return 'text-yellow-300 font-bold'
+  if (status === 'Nowy') return 'text-green-300 font-bold'
   return 'text-blue-200'
 }
 
@@ -283,4 +293,13 @@ const IconUserLarge = () =>
       h('circle', { cx: '12', cy: '7', r: '4' }),
     ],
   )
+
+const goToCreateTicket = () => {
+  const u = userStore.user
+  if (u?.roles?.includes('Helpdesk') || u?.roles?.includes('Admin') || u?.roles?.includes('Technik')) {
+    router.push({ name: 'problemReportHelpdesk' })
+  } else {
+    router.push({ name: 'problemReportClient' })
+  }
+}
 </script>

@@ -64,6 +64,20 @@
           <p class="text-gray-500">Ustal stopnie ważności zgłoszeń i ich poziomy.</p>
         </div>
 
+        <div @click="$router.push({ name: 'admin-clients' })" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:border-purple-500 hover:shadow-md transition-all cursor-pointer group">
+          <div class="w-14 h-14 bg-purple-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-purple-600 transition-colors text-purple-600 group-hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="10" width="20" height="12" rx="2"/>
+              <path d="M7 22V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18"/>
+              <path d="M11 18h2"/>
+              <path d="M11 14h2"/>
+              <path d="M11 10h2"/>
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Klienci</h2>
+          <p class="text-gray-500">Zarządzaj firmami i podmiotami zewnętrznymi w systemie.</p>
+        </div>
+
       </div>
     </div>
   </div>
