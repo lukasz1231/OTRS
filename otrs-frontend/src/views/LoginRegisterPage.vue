@@ -49,7 +49,8 @@
                 type="text"
                 id="fullname"
                 v-model="formData.fullname"
-                @input="validateFullname"
+                @focus="markFocused('fullname')"
+                @blur="markBlurred('fullname')"
                 placeholder="Jan Kowalski"
                 class="w-full border rounded-lg px-4 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
                 :class="errors.fullname ? 'border-red-500' : 'border-tekstSzary/20'"
@@ -66,7 +67,8 @@
             type="email"
             id="email"
             v-model="formData.email"
-            @input="validateEmail"
+            @focus="markFocused('email')"
+            @blur="markBlurred('email')"
             placeholder="jankowalski@example.pl"
             class="w-full border rounded-lg px-4 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
             :class="errors.email ? 'border-red-500' : 'border-tekstSzary/20'"
@@ -82,7 +84,8 @@
               id="password"
               :type="showPassword ? 'text' : 'password'"
               v-model="formData.password"
-              @input="validatePassword"
+              @focus="markFocused('password')"
+              @blur="markBlurred('password')"
               placeholder="Hasło"
               class="w-full border rounded-lg pl-4 pr-10 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
               :class="errors.password ? 'border-red-500' : 'border-tekstSzary/20'"
@@ -144,7 +147,8 @@
                   :type="showConfirmPassword ? 'text' : 'password'"
                   id="confirmPassword"
                   v-model="formData.confirmPassword"
-                  @input="validateConfirmPassword"
+                  @focus="markFocused('confirmPassword')"
+                  @blur="markBlurred('confirmPassword')"
                   placeholder="Powtórz hasło"
                   class="w-full border rounded-lg pl-4 pr-10 py-2.5 text-tekstSzaryCiemny focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski focus:border-transparent placeholder-placeholder"
                   :class="errors.confirmPassword ? 'border-red-500' : 'border-tekstSzary/20'"
@@ -288,8 +292,39 @@ const errors = reactive({
   confirmPassword: '',
 })
 
+const touched = reactive({
+  fullname: false,
+  email: false,
+  password: false,
+  confirmPassword: false,
+})
+
+const focused = reactive({
+  fullname: false,
+  email: false,
+  password: false,
+  confirmPassword: false,
+})
+
+const markTouched = (field) => {
+  touched[field] = true
+}
+
+const markFocused = (field) => {
+  focused[field] = true
+}
+
+const markBlurred = (field) => {
+  focused[field] = false
+  touched[field] = true
+  if (field === 'email') validateEmail()
+  if (field === 'password') validatePassword()
+  if (field === 'fullname') validateFullname()
+  if (field === 'confirmPassword') validateConfirmPassword()
+}
+
 const validateFullname = () => {
-  if (activeTab.value === 'register') {
+  if (activeTab.value === 'register' && touched.fullname && !focused.fullname) {
     if (!formData.fullname.trim()) {
       errors.fullname = 'Imię i nazwisko jest wymagane'
     } else if (formData.fullname.trim().length < 3) {
@@ -297,11 +332,18 @@ const validateFullname = () => {
     } else {
       errors.fullname = ''
     }
+  } else {
+    errors.fullname = ''
   }
 }
 
 const validateEmail = () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!touched.email || focused.email) {
+    errors.email = ''
+    return
+  }
+
   if (!formData.email) {
     errors.email = 'Email jest wymagany'
   } else if (!emailRegex.test(formData.email)) {
@@ -312,6 +354,11 @@ const validateEmail = () => {
 }
 
 const validatePassword = () => {
+  if (!touched.password || focused.password) {
+    errors.password = ''
+    return
+  }
+
   if (!formData.password) {
     errors.password = 'Hasło jest wymagane'
   } else if (formData.password.length < 8) {
@@ -320,33 +367,37 @@ const validatePassword = () => {
     errors.password = ''
   }
 
-  if (activeTab.value === 'register' && formData.confirmPassword) {
+  if (activeTab.value === 'register' && touched.confirmPassword && !focused.confirmPassword) {
     validateConfirmPassword()
   }
 }
 
 const validateConfirmPassword = () => {
-  if (activeTab.value === 'register') {
-    if (!formData.confirmPassword) {
-      errors.confirmPassword = 'Potwierdzenie hasła jest wymagane'
-    } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Hasła nie są identyczne'
-    } else {
-      errors.confirmPassword = ''
-    }
+  if (activeTab.value !== 'register' || !touched.confirmPassword || focused.confirmPassword) {
+    errors.confirmPassword = ''
+    return
+  }
+
+  if (!formData.confirmPassword) {
+    errors.confirmPassword = 'Potwierdzenie hasła jest wymagane'
+  } else if (formData.password !== formData.confirmPassword) {
+    errors.confirmPassword = 'Hasła nie są identyczne'
+  } else {
+    errors.confirmPassword = ''
   }
 }
 
 const isFormValid = computed(() => {
-  validateEmail()
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const isEmailValid = emailRegex.test(formData.email)
+  const isPasswordValid = formData.password && formData.password.length >= 8
 
-  if (!formData.email || errors.email) return false
-  if (!formData.password || errors.password) return false
+  if (!isEmailValid || !isPasswordValid) return false
 
   if (activeTab.value === 'register') {
-    validateFullname()
-    validateConfirmPassword()
-    return !errors.fullname && !errors.confirmPassword
+    const isFullnameValid = formData.fullname && formData.fullname.trim().length >= 3
+    const isConfirmPasswordValid = formData.confirmPassword === formData.password && !!formData.confirmPassword
+    return isFullnameValid && isConfirmPasswordValid
   }
 
   return true
@@ -363,6 +414,13 @@ const goToResetPassword = () => {
 }
 
 const handleSubmit = async () => {
+  touched.email = true
+  touched.password = true
+  if (activeTab.value === 'register') {
+    touched.fullname = true
+    touched.confirmPassword = true
+  }
+
   validateEmail()
   validatePassword()
 
