@@ -31,10 +31,15 @@ namespace otrs_backend.Services
         public DateTime CreatedAt { get; set; }
         public string Client { get; set; } = default!; // Zwracamy nazwę klienta jako string do frontu
         public string Status { get; set; } = default!;
+        public int StatusId { get; set; }
         public string Priority { get; set; } = default!;
+        public int PriorityId { get; set; }
         public string Category { get; set; } = default!;
+        public int CategoryId { get; set; }
         public string Type { get; set; } = default!;
+        public int TypeId { get; set; }
         public string Queue { get; set; } = default!;
+        public int QueueId { get; set; }
         public bool IsMyTicket { get; set; }
         public List<CommentDto> Comments { get; set; } = new();
     }
@@ -129,10 +134,15 @@ namespace otrs_backend.Services
                     CreatedAt = t.CreatedAt,
                     Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
                     Status = t.Status.Name,
+                    StatusId = t.StatusId,
                     Priority = t.Priority.Name,
+                    PriorityId = t.PriorityId,
                     Category = t.Category.Name,
+                    CategoryId = t.CategoryId,
                     Type = t.Type.Name,
+                    TypeId = t.TypeId,
                     Queue = t.Queue.Name,
+                    QueueId = t.QueueId,
                     IsMyTicket = t.CreatorId == currentUserId
                 })
                 .OrderByDescending(t => t.CreatedAt)
@@ -166,10 +176,15 @@ namespace otrs_backend.Services
                     CreatedAt = t.CreatedAt,
                     Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
                     Status = t.Status.Name,
+                    StatusId = t.StatusId,
                     Priority = t.Priority.Name,
+                    PriorityId = t.PriorityId,
                     Category = t.Category.Name,
+                    CategoryId = t.CategoryId,
                     Type = t.Type.Name,
+                    TypeId = t.TypeId,
                     Queue = t.Queue.Name,
+                    QueueId = t.QueueId,
                     IsMyTicket = t.CreatorId == currentUserId,
 
                     Comments = t.Comments.Select(c => new CommentDto
@@ -284,6 +299,48 @@ namespace otrs_backend.Services
             }
 
             ticket.StatusId = newStatusId;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdatePriorityAsync(int ticketId, int newPriorityId)
+        {
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null)
+                throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
+
+            var exists = await _context.Priorities.AnyAsync(p => p.Id == newPriorityId);
+            if (!exists)
+                throw new Exception($"Priorytet o ID '{newPriorityId}' nie istnieje.");
+
+            ticket.PriorityId = newPriorityId;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateCategoryAsync(int ticketId, int newCategoryId)
+        {
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null)
+                throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
+
+            var exists = await _context.Categories.AnyAsync(c => c.Id == newCategoryId);
+            if (!exists)
+                throw new Exception($"Kategoria o ID '{newCategoryId}' nie istnieje.");
+
+            ticket.CategoryId = newCategoryId;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateQueueAsync(int ticketId, int newQueueId)
+        {
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null)
+                throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
+
+            var exists = await _context.Ques.AnyAsync(q => q.Id == newQueueId);
+            if (!exists)
+                throw new Exception($"Kolejka o ID '{newQueueId}' nie istnieje.");
+
+            ticket.QueueId = newQueueId;
             await _context.SaveChangesAsync();
         }
 
