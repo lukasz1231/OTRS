@@ -78,6 +78,16 @@
           <p class="text-gray-500">Zarządzaj firmami i podmiotami zewnętrznymi w systemie.</p>
         </div>
 
+        <div @click="$router.push({ name: 'admin-types' })" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:border-yellow-400 hover:shadow-md transition-all cursor-pointer group">
+          <div class="w-14 h-14 bg-yellow-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-yellow-400 transition-colors text-yellow-400 group-hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 9h16"/><path d="M4 15h16"/><path d="M10 3 8 21"/><path d="m16 3-2 18"/>
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">Typy</h2>
+          <p class="text-gray-500">Zarządzaj klasyfikacją zgłoszeń (np. Incydent, Zmiana, Zapytanie).</p>
+        </div>
+
       </div>
     </div>
   </div>

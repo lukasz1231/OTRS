@@ -261,19 +261,19 @@ const submitTicket = async () => {
       QueueId: Number(form.queueId),
     }
 
-    // Wysyłka do TicketController
-    await axios.post('https://localhost:7054/api/Ticket', payload, axiosConfig)
+    const response = await axios.post('https://localhost:7054/api/Ticket', payload, axiosConfig)
 
-    const createdTicket = await response.json()
+    const createdTicket = response.data
 
     successMessage.value =
       'Zgłoszenie zostało pomyślnie utworzone! Za chwilę zostaniesz przekierowany.'
 
     setTimeout(() => {
-      router.push(`/ticket/${createdTicket.id}`)
-    }, 4000)
+      const ticketId = createdTicket.id || createdTicket.Id
+      router.push(`/ticket/${ticketId}`)
+    }, 2000) 
   } catch (error) {
-    console.error(error)
+    console.error('Błąd podczas wysyłania:', error)
     errorMessage.value =
       error.response?.data?.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.'
   } finally {

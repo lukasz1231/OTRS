@@ -8,7 +8,6 @@ namespace otrs_backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // ZMIANA: Teraz cały kontroler jest dostępny dla Admina i Helpdesku (pobieranie danych)
     [Authorize(Roles = "Admin,Helpdesk")] 
     public class AdminController : ControllerBase
     {
@@ -72,6 +71,31 @@ namespace otrs_backend.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Użytkownik zaktualizowany" });
+        }
+
+        [HttpDelete("users/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var user = await _context.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Id == id);
+            if (user == null) return NotFound();
+
+            // Sprawdzamy czy jest twórcą LUB czy znajduje się w kolekcji przypisanych osób
+            var hasTickets = await _context.Tickets.AnyAsync(t => 
+                t.CreatorId == id || 
+                t.AssignedUsers.Any(u => u.Id == id) 
+            );
+
+            if (hasTickets) 
+            {
+                return BadRequest(new { message = "Nie można usunąć użytkownika, który posiada przypisane zgłoszenia (jako twórca lub wykonawca)." });
+            }
+
+            user.Roles.Clear();
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Użytkownik usunięty." });
         }
 
         #endregion
@@ -340,12 +364,59 @@ namespace otrs_backend.Controllers
 
         #endregion
 
+        #region Zarządzanie Typami
+
+        [HttpGet("types-all")] // Wersja dla admina z opisami
+        public async Task<IActionResult> GetAllTypes() => Ok(await _context.Types.ToListAsync());
+
+        [HttpPost("types")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateType([FromBody] Models.Type type)
+        {
+            if (string.IsNullOrWhiteSpace(type.Name)) return BadRequest("Nazwa jest wymagana.");
+            _context.Types.Add(type);
+            await _context.SaveChangesAsync();
+            return Ok(type);
+        }
+
+        [HttpPut("types/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateType(int id, [FromBody] Models.Type type)
+        {
+            var existing = await _context.Types.FindAsync(id);
+            if (existing == null) return NotFound();
+            
+            existing.Name = type.Name;
+            existing.Description = type.Description;
+            
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        [HttpDelete("types/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteType(int id)
+        {
+            var type = await _context.Types.FindAsync(id);
+            if (type == null) return NotFound();
+            
+            // Sprawdzamy czy typ jest używany w zgłoszeniach
+            if (await _context.Tickets.AnyAsync(t => t.TypeId == id))
+                return BadRequest("Nie można usunąć typu, który jest przypisany do zgłoszeń!");
+
+            _context.Types.Remove(type);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
         [HttpGet("types")]
         [AllowAnonymous]
         public async Task<IActionResult> GetTypes() 
         {
             return Ok(await _context.Types.ToListAsync());
         }
+
+        #endregion
     }
 
     public class UpdateUserRequest { public string Name { get; set; } = string.Empty; public string Surname { get; set; } = string.Empty; public string Email { get; set; } = string.Empty; public string? NewPassword { get; set; } public List<string> Roles { get; set; } = new List<string>(); }

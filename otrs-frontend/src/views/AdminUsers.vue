@@ -62,12 +62,18 @@
                   {{ role }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-right">
+              <td class="px-6 py-4 text-right flex justify-end gap-3">
                 <button
                   @click="openEditModal(user)"
                   class="text-przyciskiNiebieski hover:text-blue-800 font-medium text-sm transition-colors cursor-pointer"
                 >
                   Edytuj
+                </button>
+                <button
+                  @click="confirmDelete(user)"
+                  class="text-red-500 hover:text-red-700 font-medium text-sm transition-colors cursor-pointer"
+                >
+                  Usuń
                 </button>
               </td>
             </tr>
@@ -150,6 +156,42 @@
         </div>
       </div>
     </div>
+
+    <div
+      v-if="isDeleteModalOpen"
+      class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 animate-in zoom-in duration-200 text-center"
+      >
+        <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">Usuń użytkownika</h2>
+        <p class="text-gray-500 text-sm mb-8">
+          Czy na pewno chcesz usunąć użytkownika <strong>{{ userToDelete?.email }}</strong>? Tej operacji nie można cofnąć.
+        </p>
+
+        <div class="flex gap-3">
+          <button
+            @click="isDeleteModalOpen = false"
+            class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium cursor-pointer"
+          >
+            Anuluj
+          </button>
+          <button
+            @click="deleteUser"
+            class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium cursor-pointer transition-colors"
+          >
+            Usuń
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -162,8 +204,14 @@ const showNotification = inject('showNotification')
 const users = ref([])
 const allRoles = ref([])
 const searchQuery = ref('')
+
+// Modal Edycji
 const isModalOpen = ref(false)
 const editForm = ref({ id: null, name: '', surname: '', email: '', roles: [], newPassword: '' })
+
+// Modal Usuwania
+const isDeleteModalOpen = ref(false)
+const userToDelete = ref(null)
 
 const API_URL = 'https://localhost:7054/api/Admin'
 const axiosConfig = { withCredentials: true }
@@ -197,11 +245,30 @@ const saveChanges = async () => {
     await axios.put(`${API_URL}/users/${editForm.value.id}`, editForm.value, axiosConfig)
     isModalOpen.value = false
     await fetchUsers()
-    
     showNotification('Dane użytkownika zostały zaktualizowane!', 'success')
   } catch (err) {
     showNotification('Wystąpił błąd podczas zapisywania zmian.', 'error')
-    console.log(err)
+  }
+}
+
+// Logika usuwania
+const confirmDelete = (user) => {
+  userToDelete.value = user
+  isDeleteModalOpen.value = true
+}
+
+const deleteUser = async () => {
+  if (!userToDelete.value) return
+  try {
+    await axios.delete(`${API_URL}/users/${userToDelete.value.id}`, axiosConfig)
+    isDeleteModalOpen.value = false
+    userToDelete.value = null
+    await fetchUsers()
+    showNotification('Użytkownik został pomyślnie usunięty.', 'success')
+  } catch (err) {
+    const errorMsg = err.response?.data?.message || 'Wystąpił błąd podczas usuwania użytkownika.'
+    showNotification(errorMsg, 'error')
+    isDeleteModalOpen.value = false
   }
 }
 
