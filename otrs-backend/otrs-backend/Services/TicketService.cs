@@ -34,12 +34,21 @@ namespace otrs_backend.Services
         public int StatusId { get; set; }
         public string Priority { get; set; } = default!;
         public int PriorityId { get; set; }
+        public int PrioritySlaHours { get; set; }
         public string Category { get; set; } = default!;
         public int CategoryId { get; set; }
         public string Type { get; set; } = default!;
         public int TypeId { get; set; }
         public string Queue { get; set; } = default!;
         public int QueueId { get; set; }
+        public DateTime DueAtUtc { get; set; }
+        public DateTime? ResolvedAtUtc { get; set; }
+        public DateTime? PausedAtUtc { get; set; }
+        public int TotalPausedMinutes { get; set; }
+        public int RemainingMinutes { get; set; }
+        public bool IsSlaBreached { get; set; }
+        public string SlaState { get; set; } = "ok";
+        public string SlaMessage { get; set; } = string.Empty;
         public bool IsMyTicket { get; set; }
         public List<CommentDto> Comments { get; set; } = new();
     }
@@ -118,7 +127,7 @@ namespace otrs_backend.Services
 
             var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
 
-            return await visibleTicketsQuery
+            var tickets = await visibleTicketsQuery
                 .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
                 .Include(t => t.Status)
                 .Include(t => t.Priority)
@@ -137,16 +146,28 @@ namespace otrs_backend.Services
                     StatusId = t.StatusId,
                     Priority = t.Priority.Name,
                     PriorityId = t.PriorityId,
+                    PrioritySlaHours = t.Priority.SlaHours,
                     Category = t.Category.Name,
                     CategoryId = t.CategoryId,
                     Type = t.Type.Name,
                     TypeId = t.TypeId,
                     Queue = t.Queue.Name,
                     QueueId = t.QueueId,
+                    ResolvedAtUtc = t.ResolvedAtUtc,
+                    PausedAtUtc = t.PausedAtUtc,
+                    TotalPausedMinutes = t.TotalPausedMinutes,
                     IsMyTicket = t.CreatorId == currentUserId
                 })
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
+
+            var now = DateTime.UtcNow;
+            foreach (var ticket in tickets)
+            {
+                ApplySla(ticket, now);
+            }
+
+            return tickets;
         }
 
         public async Task<TicketDto?> GetTicketByIdAsync(int ticketId, int currentUserId)
@@ -155,7 +176,7 @@ namespace otrs_backend.Services
 
             var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
 
-            return await visibleTicketsQuery
+            var ticket = await visibleTicketsQuery
                 .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
                 .Include(t => t.Comments)
                     .ThenInclude(c => c.User)
@@ -179,12 +200,16 @@ namespace otrs_backend.Services
                     StatusId = t.StatusId,
                     Priority = t.Priority.Name,
                     PriorityId = t.PriorityId,
+                    PrioritySlaHours = t.Priority.SlaHours,
                     Category = t.Category.Name,
                     CategoryId = t.CategoryId,
                     Type = t.Type.Name,
                     TypeId = t.TypeId,
                     Queue = t.Queue.Name,
                     QueueId = t.QueueId,
+                    ResolvedAtUtc = t.ResolvedAtUtc,
+                    PausedAtUtc = t.PausedAtUtc,
+                    TotalPausedMinutes = t.TotalPausedMinutes,
                     IsMyTicket = t.CreatorId == currentUserId,
 
                     Comments = t.Comments.Select(c => new CommentDto
@@ -206,6 +231,110 @@ namespace otrs_backend.Services
                     .ToList()
                 })
                 .FirstOrDefaultAsync();
+
+            if (ticket != null)
+            {
+                ApplySla(ticket, DateTime.UtcNow);
+            }
+
+            return ticket;
+        }
+
+        private static void ApplySla(TicketDto ticket, DateTime nowUtc)
+        {
+            ticket.DueAtUtc = ticket.CreatedAt
+                .AddHours(ticket.PrioritySlaHours)
+                .AddMinutes(ticket.TotalPausedMinutes);
+
+            var isClosed = IsClosedStatus(ticket.Status);
+            var isPaused = IsPausedStatus(ticket.Status);
+
+            var referenceTime = isClosed && ticket.ResolvedAtUtc.HasValue
+                ? ticket.ResolvedAtUtc.Value
+                : isPaused && ticket.PausedAtUtc.HasValue
+                    ? ticket.PausedAtUtc.Value
+                : nowUtc;
+
+            ticket.RemainingMinutes = (int)Math.Floor((ticket.DueAtUtc - referenceTime).TotalMinutes);
+            ticket.IsSlaBreached = ticket.RemainingMinutes < 0;
+
+            if (isClosed)
+            {
+                ticket.SlaState = ticket.IsSlaBreached ? "breached" : "ok";
+                ticket.SlaMessage = ticket.IsSlaBreached
+                    ? "Zgłoszenie rozwiązane po SLA"
+                    : "Zgłoszenie rozwiązane przed SLA";
+                return;
+            }
+
+            if (isPaused)
+            {
+                ticket.SlaState = "paused";
+                ticket.SlaMessage = GetPausedSlaMessage(ticket.Status);
+                return;
+            }
+
+            if (ticket.IsSlaBreached)
+            {
+                ticket.SlaState = "breached";
+                ticket.SlaMessage = "SLA przekroczone";
+                return;
+            }
+
+            if (ticket.RemainingMinutes <= 120)
+            {
+                ticket.SlaState = "critical";
+                ticket.SlaMessage = "SLA krytyczne (<= 2h)";
+                return;
+            }
+
+            if (ticket.RemainingMinutes <= 480)
+            {
+                ticket.SlaState = "warning";
+                ticket.SlaMessage = "Uwaga: SLA poniżej 8h";
+                return;
+            }
+
+            ticket.SlaState = "ok";
+            ticket.SlaMessage = "SLA w normie";
+        }
+
+        private static bool IsClosedStatus(string status)
+        {
+            var normalized = NormalizeStatus(status);
+            if (string.IsNullOrEmpty(normalized)) return false;
+
+            return normalized.Contains("rozwiaz") || normalized.Contains("zamkniet");
+        }
+
+        private static bool IsPausedStatus(string status)
+        {
+            var normalized = NormalizeStatus(status);
+            if (string.IsNullOrEmpty(normalized)) return false;
+
+            return normalized.Contains("wstrzym") || normalized.Contains("oczekuje na odpowiedz klienta");
+        }
+
+        private static string NormalizeStatus(string status)
+        {
+            if (string.IsNullOrWhiteSpace(status)) return string.Empty;
+
+            return status
+                .Normalize(System.Text.NormalizationForm.FormD)
+                .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                .Aggregate(string.Empty, (current, c) => current + char.ToLowerInvariant(c))
+                .Trim();
+        }
+
+        private static string GetPausedSlaMessage(string status)
+        {
+            var normalized = NormalizeStatus(status);
+            if (normalized.Contains("oczekuje na odpowiedz klienta"))
+            {
+                return "SLA wstrzymane: oczekiwanie na odpowiedź klienta";
+            }
+
+            return "SLA wstrzymane: status Wstrzymane";
         }
 
         private async Task<HashSet<string>> GetUserRolesAsync(int userId)
@@ -292,13 +421,40 @@ namespace otrs_backend.Services
                 throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
             }
 
-            var statusExists = await _context.Statuses.AnyAsync(s => s.Id == newStatusId);
-            if (!statusExists)
+            var newStatus = await _context.Statuses.FirstOrDefaultAsync(s => s.Id == newStatusId);
+            if (newStatus == null)
             {
                 throw new Exception($"Status o ID '{newStatusId}' nie istnieje.");
             }
 
             ticket.StatusId = newStatusId;
+
+            var nowUtc = DateTime.UtcNow;
+            var wasPaused = ticket.PausedAtUtc.HasValue;
+            var isPausedStatus = IsPausedStatus(newStatus.Name);
+
+            if (wasPaused && !isPausedStatus)
+            {
+                var pausedDuration = nowUtc - ticket.PausedAtUtc!.Value;
+                var pausedMinutes = (int)Math.Max(0, Math.Floor(pausedDuration.TotalMinutes));
+                ticket.TotalPausedMinutes += pausedMinutes;
+                ticket.PausedAtUtc = null;
+            }
+            else if (!wasPaused && isPausedStatus)
+            {
+                ticket.PausedAtUtc = nowUtc;
+            }
+
+            var isClosingStatus = IsClosedStatus(newStatus.Name);
+            if (isClosingStatus && ticket.ResolvedAtUtc == null)
+            {
+                ticket.ResolvedAtUtc = nowUtc;
+            }
+            else if (!isClosingStatus)
+            {
+                ticket.ResolvedAtUtc = null;
+            }
+
             await _context.SaveChangesAsync();
         }
 

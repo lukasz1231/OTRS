@@ -81,6 +81,9 @@
                 <span :class="getStatusClass(getNormalizedStatus(ticket.status))" class="px-3 py-1 rounded-full">
                   {{ getNormalizedStatus(ticket.status) }}
                 </span>
+                <span :class="getSlaBadgeClass(ticket.slaState ?? ticket.SlaState)" class="px-3 py-1 rounded-full font-medium">
+                  {{ getSlaLabel(ticket.slaState ?? ticket.SlaState) }}
+                </span>
                 <span class="text-gray-400">
                   {{ formatDate(ticket.createdAt) }}
                 </span>
@@ -191,8 +194,50 @@ const getStatusClass = (status) => {
   return classes[status] || 'bg-gray-100 text-gray-700'
 }
 
+const parseUtcDate = (value) => {
+  if (!value) return null
+  if (value instanceof Date) return value
+  if (typeof value !== 'string') return new Date(value)
+
+  const hasTimezone = /[zZ]$|[+-]\d{2}:\d{2}$/.test(value)
+  const normalized = hasTimezone ? value : `${value}Z`
+  return new Date(normalized)
+}
+
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('pl-PL')
+  const parsedDate = parseUtcDate(date)
+  if (!parsedDate || Number.isNaN(parsedDate.getTime())) return '—'
+
+  return parsedDate.toLocaleDateString('pl-PL', {
+    timeZone: 'Europe/Warsaw',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+const getSlaLabel = (slaState) => {
+  if (slaState === 'breached') return 'SLA przekroczone'
+  if (slaState === 'critical') return 'SLA krytyczne (<= 2h)'
+  if (slaState === 'warning') return 'SLA < 8h'
+  if (slaState === 'paused') return 'SLA wstrzymane'
+  return 'SLA OK'
+}
+
+const getSlaBadgeClass = (slaState) => {
+  if (slaState === 'breached') return 'bg-red-100 text-red-700'
+  if (slaState === 'critical') return 'bg-rose-100 text-rose-700'
+  if (slaState === 'warning') return 'bg-amber-100 text-amber-700'
+  if (slaState === 'paused') return 'bg-slate-100 text-slate-700'
+  return 'bg-emerald-100 text-emerald-700'
+}
+
+const getSlaTextClass = (slaState) => {
+  if (slaState === 'breached') return 'text-red-700'
+  if (slaState === 'critical') return 'text-rose-700'
+  if (slaState === 'warning') return 'text-amber-700'
+  if (slaState === 'paused') return 'text-slate-700'
+  return 'text-emerald-700'
 }
 
 const goToCreateTicket = () => {

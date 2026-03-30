@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using otrs_backend.Data;
 
@@ -10,9 +11,11 @@ using otrs_backend.Data;
 namespace otrs_backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260330132547_AddSlaPauseFieldsToTickets")]
+    partial class AddSlaPauseFieldsToTickets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -123,30 +126,12 @@ namespace otrs_backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("ApartmentNumber")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("City")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PostalCode")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Street")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("StreetNumber")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

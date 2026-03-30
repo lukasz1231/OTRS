@@ -21,6 +21,7 @@
             <div>
               <h3 class="font-bold text-xl text-gray-800">{{ p.name }}</h3>
               <p class="text-sm text-gray-500 italic">{{ p.description || 'Brak opisu' }}</p>
+              <p class="text-xs text-blue-700 font-semibold mt-1">SLA: {{ p.slaHours }}h</p>
             </div>
           </div>
           <div class="flex gap-3">
@@ -46,6 +47,10 @@
           <div>
             <label class="text-xs font-bold text-gray-400 uppercase ml-1">Opis</label>
             <textarea v-model="currentPriority.description" class="w-full p-3 border border-gray-200 rounded-xl h-20 resize-none outline-none focus:ring-2 focus:ring-blue-500" placeholder="Kiedy stosować ten priorytet..."></textarea>
+          </div>
+          <div>
+            <label class="text-xs font-bold text-gray-400 uppercase ml-1">SLA (godziny)</label>
+            <input v-model.number="currentPriority.slaHours" type="number" min="1" class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="np. 24" />
           </div>
         </div>
         <div class="flex gap-3 mt-8">
@@ -79,21 +84,27 @@ const axiosConfig = { withCredentials: true }
 const priorities = ref([])
 const showModal = ref(false)
 const isEditing = ref(false)
-const currentPriority = ref({ id: null, name: '', description: '', level: 1 })
+const currentPriority = ref({ id: null, name: '', description: '', level: 1, slaHours: 24 })
 const confirmModal = reactive({ show: false, message: '', action: null })
 
 const fetchPriorities = async () => {
   try {
     const res = await axios.get(API_URL, axiosConfig)
-    priorities.value = res.data.map(p => ({ id: p.id || p.Id, name: p.name || p.Name, description: p.description || p.Description, level: p.level || p.Level }))
+    priorities.value = res.data.map(p => ({
+      id: p.id ?? p.Id,
+      name: p.name ?? p.Name,
+      description: p.description ?? p.Description,
+      level: p.level ?? p.Level,
+      slaHours: p.slaHours ?? p.SlaHours ?? 24,
+    }))
   } catch (e) { console.error(e) }
 }
 
-const openAddModal = () => { isEditing.value = false; currentPriority.value = { id: null, name: '', description: '', level: 1 }; showModal.value = true; }
+const openAddModal = () => { isEditing.value = false; currentPriority.value = { id: null, name: '', description: '', level: 1, slaHours: 24 }; showModal.value = true; }
 const openEditModal = (prio) => { isEditing.value = true; currentPriority.value = { ...prio }; showModal.value = true; }
 
 const savePriority = async () => {
-  if (!currentPriority.value.name) return
+  if (!currentPriority.value.name || !currentPriority.value.slaHours || currentPriority.value.slaHours < 1) return
   try {
     if (isEditing.value) {
       // Przy edycji (PUT) ID jest wymagane

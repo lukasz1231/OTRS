@@ -407,6 +407,33 @@
                       <p class="font-bold text-gray-800">{{ formatDate(ticket.createdAt) }}</p>
                     </div>
                   </div>
+
+                  <div class="flex items-start gap-4">
+                    <div class="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase">SLA do</p>
+                      <p class="font-bold text-gray-800">{{ formatDate(ticket.dueAtUtc ?? ticket.DueAtUtc) }}</p>
+                      <p :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)" class="text-xs font-semibold mt-1">
+                        {{ formatSlaRemaining(ticket.remainingMinutes ?? ticket.RemainingMinutes, ticket.slaState ?? ticket.SlaState) }}
+                      </p>
+                      <p v-if="shouldShowSlaMessage(ticket.slaMessage ?? ticket.SlaMessage)" :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)" class="text-[11px] font-medium mt-1">
+                        {{ ticket.slaMessage ?? ticket.SlaMessage }}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -686,15 +713,53 @@ const getRoleBadgeColor = (roleString) => {
   return 'bg-gray-100 text-gray-500 border border-gray-200'
 }
 
+const parseUtcDate = (value) => {
+  if (!value) return null
+  if (value instanceof Date) return value
+  if (typeof value !== 'string') return new Date(value)
+
+  const hasTimezone = /[zZ]$|[+-]\d{2}:\d{2}$/.test(value)
+  const normalized = hasTimezone ? value : `${value}Z`
+  return new Date(normalized)
+}
+
 const formatDate = (date) => {
   if (!date) return ''
-  return new Date(date).toLocaleString('pl-PL', {
+  const parsedDate = parseUtcDate(date)
+  if (!parsedDate || Number.isNaN(parsedDate.getTime())) return ''
+
+  return parsedDate.toLocaleString('pl-PL', {
+    timeZone: 'Europe/Warsaw',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+const formatSlaRemaining = (minutes, slaState) => {
+  if (slaState === 'breached') return 'SLA przekroczone'
+  if (slaState === 'paused') return 'SLA wstrzymane'
+  if (typeof minutes !== 'number') return 'Brak danych SLA'
+
+  const hours = Math.floor(minutes / 60)
+  const mins = Math.abs(minutes % 60)
+  if (hours <= 0) return `Pozostało ${Math.max(minutes, 0)} min`
+  return `Pozostało ${hours}h ${mins}m`
+}
+
+const getSlaTextClass = (slaState) => {
+  if (slaState === 'breached') return 'text-red-600'
+  if (slaState === 'critical') return 'text-red-500'
+  if (slaState === 'warning') return 'text-amber-600'
+  if (slaState === 'paused') return 'text-slate-600'
+  return 'text-emerald-600'
+}
+
+const shouldShowSlaMessage = (message) => {
+  if (!message) return false
+  return message.trim() === 'Zgłoszenie rozwiązane po SLA'
 }
 
 const getStatusColor = (status) => {

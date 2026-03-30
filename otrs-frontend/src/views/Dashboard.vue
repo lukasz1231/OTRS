@@ -154,11 +154,26 @@ const normalizeLabel = (value) => {
     .trim()
 }
 
+const parseUtcDate = (value) => {
+  if (!value) return null
+  if (value instanceof Date) return value
+  if (typeof value !== 'string') return new Date(value)
+
+  const hasTimezone = /[zZ]$|[+-]\d{2}:\d{2}$/.test(value)
+  const normalized = hasTimezone ? value : `${value}Z`
+  return new Date(normalized)
+}
+
 const formatDate = (val) => {
   if (!val) return '—'
-  const d = new Date(val)
+  const d = parseUtcDate(val)
   if (isNaN(d)) return '—'
-  return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return d.toLocaleDateString('pl-PL', {
+    timeZone: 'Europe/Warsaw',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
 }
 
 const statusBadgeClass = (status) => {
@@ -211,12 +226,18 @@ const buildChart = (tickets) => {
   for (let i = 6; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    const label = d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' })
+    const label = d.toLocaleDateString('pl-PL', {
+      timeZone: 'Europe/Warsaw',
+      day: '2-digit',
+      month: '2-digit',
+    })
     const dateStr = d.toISOString().slice(0, 10) // YYYY-MM-DD
     const count = tickets.filter((t) => {
       const created = t.createdAt ?? t.CreatedAt
       if (!created) return false
-      return new Date(created).toISOString().slice(0, 10) === dateStr
+      const createdDate = parseUtcDate(created)
+      if (!createdDate || Number.isNaN(createdDate.getTime())) return false
+      return createdDate.toISOString().slice(0, 10) === dateStr
     }).length
     days.push(label)
     counts.push(count)
@@ -290,9 +311,6 @@ const loadDashboardStats = async () => {
     const tickets = await ticketsResponse.json()
     const safeTickets = Array.isArray(tickets) ? tickets : []
 
-    const now = Date.now()
-    const SLA_LIMIT_MS = 48 * 60 * 60 * 1000
-
     const isNowy = (ticket) => normalizeLabel(ticket.status ?? ticket.Status) === 'nowy'
     const isRozwiazane = (ticket) => normalizeLabel(ticket.status ?? ticket.Status) === 'rozwiazane'
 
@@ -300,9 +318,8 @@ const loadDashboardStats = async () => {
     const newCount = safeTickets.filter((t) => isNowy(t)).length
     const inProgressCount = safeTickets.filter((t) => !isNowy(t) && !isRozwiazane(t)).length
     const slaBreachCount = safeTickets.filter((t) => {
-      const createdAtMs = new Date(t.createdAt ?? t.CreatedAt).getTime()
-      if (Number.isNaN(createdAtMs)) return false
-      return now - createdAtMs > SLA_LIMIT_MS
+      const breachFlag = t.isSlaBreached ?? t.IsSlaBreached
+      return breachFlag === true
     }).length
 
     stats.value[0].value = total
@@ -312,8 +329,8 @@ const loadDashboardStats = async () => {
 
     recentTickets.value = [...safeTickets]
       .sort((a, b) => {
-        const da = new Date(a.createdAt ?? a.CreatedAt).getTime()
-        const db = new Date(b.createdAt ?? b.CreatedAt).getTime()
+        const da = parseUtcDate(a.createdAt ?? a.CreatedAt)?.getTime() ?? 0
+        const db = parseUtcDate(b.createdAt ?? b.CreatedAt)?.getTime() ?? 0
         return db - da
       })
       .slice(0, 5)
