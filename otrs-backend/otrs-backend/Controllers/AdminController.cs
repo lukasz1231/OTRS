@@ -328,12 +328,16 @@ namespace otrs_backend.Controllers
 
         [HttpGet("clients")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetClients() => Ok(await _context.Clients.ToListAsync());
+        public async Task<IActionResult> GetClients()
+            => Ok(await _context.Clients.ToListAsync());
 
         [HttpPost("clients")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateClient([FromBody] Client client)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             _context.Clients.Add(client);
             await _context.SaveChangesAsync();
             return Ok(client);
@@ -343,10 +347,22 @@ namespace otrs_backend.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateClient(int id, [FromBody] Client client)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var existing = await _context.Clients.FindAsync(id);
             if (existing == null) return NotFound();
+
             existing.Name = client.Name;
             existing.Description = client.Description;
+
+            existing.City = client.City;
+            existing.PostalCode = client.PostalCode;
+            existing.Street = client.Street;
+            existing.StreetNumber = client.StreetNumber;
+            existing.ApartmentNumber = client.ApartmentNumber;
+            existing.Phone = client.Phone;
+
             await _context.SaveChangesAsync();
             return Ok(existing);
         }
