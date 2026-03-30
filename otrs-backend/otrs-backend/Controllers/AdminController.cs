@@ -291,6 +291,9 @@ namespace otrs_backend.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreatePriority([FromBody] Priority prio)
         {
+            if (prio.SlaHours <= 0)
+                return BadRequest("SLA (godziny) musi być większe od zera.");
+
             _context.Priorities.Add(prio);
             await _context.SaveChangesAsync();
             return Ok(prio);
@@ -302,9 +305,14 @@ namespace otrs_backend.Controllers
         {
             var existing = await _context.Priorities.FindAsync(id);
             if (existing == null) return NotFound();
+
+            if (prio.SlaHours <= 0)
+                return BadRequest("SLA (godziny) musi być większe od zera.");
+
             existing.Name = prio.Name;
             existing.Description = prio.Description;
             existing.Level = prio.Level;
+            existing.SlaHours = prio.SlaHours;
             await _context.SaveChangesAsync();
             return Ok(existing);
         }

@@ -9,5 +9,6 @@ namespace otrs_backend.Models
         public string Name { get; set; }
         public string Description { get; set; }
         public int Level { get; set; }
+        public int SlaHours { get; set; } = 48;
     }
 }
