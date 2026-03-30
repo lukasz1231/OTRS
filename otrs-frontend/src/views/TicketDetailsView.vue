@@ -105,7 +105,7 @@
                   </option>
                 </select>
               </div>
-              <div class="flex flex-col gap-1">
+              <div v-if="canChangeQueue" class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Kolejka</label>
                 <select v-model="selectedQueueId" @change="updateQueue" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
                   <option v-for="queueOption in availableQueues" :key="queueOption.id" :value="queueOption.id">
@@ -469,6 +469,23 @@ const canChangeStatus = computed(() => {
   return false
 })
 
+const canChangeQueue = computed(() => {
+  if (!userStore.user || !userStore.user.roles) return false
+
+  const allowedRoles = ['Admin', 'Helpdesk']
+
+  if (Array.isArray(userStore.user.roles)) {
+    return userStore.user.roles.some((role) => allowedRoles.includes(role))
+  }
+
+  if (typeof userStore.user.roles === 'string') {
+    const userRolesArray = userStore.user.roles.split(',').map((r) => r.trim())
+    return userRolesArray.some((role) => allowedRoles.includes(role))
+  }
+
+  return false
+})
+
 const fetchTicketDetails = async () => {
   try {
     const response = await axios.get(`https://localhost:7054/api/ticket/${route.params.id}`, {
@@ -592,6 +609,7 @@ const updateCategory = async () => {
 }
 
 const updateQueue = async () => {
+  if (!canChangeQueue.value) return
   if (selectedQueueId.value == null) return
   try {
     await axios.patch(
@@ -695,7 +713,11 @@ onMounted(async () => {
   }
 
   if (canChangeStatus.value) {
-    await Promise.all([fetchStatuses(), fetchPriorities(), fetchCategories(), fetchQueues()])
+    await Promise.all([fetchStatuses(), fetchPriorities(), fetchCategories()])
+  }
+
+  if (canChangeQueue.value) {
+    await fetchQueues()
   }
 })
 </script>

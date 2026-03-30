@@ -160,7 +160,7 @@ namespace otrs_backend.Controllers
         }
 
         [HttpPatch("{id}/queue")]
-        [Authorize(Roles = "Admin,Helpdesk,Technik")]
+        [Authorize(Roles = "Admin,Helpdesk")]
         public async Task<IActionResult> ChangeTicketQueue(int id, [FromBody] ChangeQueueRequest request)
         {
             try
