@@ -87,10 +87,10 @@
             <tr
               v-for="ticket in recentTickets"
               :key="ticket.id ?? ticket.Id"
-              @click="goToTicket(ticket.id ?? ticket.Id)"
+              @click="goToTicket(ticket.publicId ?? ticket.PublicId)"
               class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
             >
-              <td class="px-6 py-3 text-tekstSzaryCiemny font-mono">#{{ ticket.id ?? ticket.Id }}</td>
+              <td class="px-6 py-3 text-tekstSzaryCiemny font-mono">{{ ticket.publicId ?? ticket.PublicId }}</td>
               <td class="px-6 py-3 text-tekstSzaryCiemny max-w-xs truncate">{{ ticket.title ?? ticket.Title ?? '—' }}</td>
               <td class="px-6 py-3">
                 <span :class="statusBadgeClass(ticket.status ?? ticket.Status)" class="px-2 py-0.5 rounded-full text-xs font-medium">

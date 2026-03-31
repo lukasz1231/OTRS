@@ -32,7 +32,7 @@ namespace otrs_backend.Controllers
             try
             {
                 var ticket = await _ticketService.CreateTicketAsync(request, currentUserId);
-                return CreatedAtAction(nameof(GetTicketById), new { id = ticket.Id }, ticket);
+                return CreatedAtAction(nameof(GetTicketById), new { id = ticket.PublicId }, ticket);
             }
             catch (Exception ex)
             {
@@ -41,7 +41,7 @@ namespace otrs_backend.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetTicketById(int id)
+        public async Task<IActionResult> GetTicketById(string id)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -52,7 +52,7 @@ namespace otrs_backend.Controllers
 
             try
             {
-                var ticket = await _ticketService.GetTicketByIdAsync(id, currentUserId);
+                var ticket = await _ticketService.GetTicketByPublicIdAsync(id, currentUserId);
 
                 if (ticket == null)
                 {
@@ -90,7 +90,7 @@ namespace otrs_backend.Controllers
 
         [HttpPost("{id}/comment")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> AddComment(int id, [FromForm] string content, IFormFileCollection files)
+        public async Task<IActionResult> AddComment(string id, [FromForm] string content, IFormFileCollection files)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
@@ -105,7 +105,10 @@ namespace otrs_backend.Controllers
 
             try
             {
-                await _ticketService.AddCommentAsync(id, currentUserId, content, files);
+                var dbId = await _ticketService.GetTicketIdByPublicIdAsync(id);
+                if (dbId == null) return NotFound(new { message = "Nie znaleziono zgłoszenia." });
+
+                await _ticketService.AddCommentAsync(dbId.Value, currentUserId, content, files);
                 return Ok(new { message = "Komentarz z załącznikami został dodany pomyślnie." });
             }
             catch (Exception ex)
@@ -116,7 +119,7 @@ namespace otrs_backend.Controllers
 
         [HttpPatch("{id}/status")]
         [Authorize(Roles = "Admin,Helpdesk,Technik")]
-        public async Task<IActionResult> ChangeTicketStatus(int id, [FromBody] ChangeStatusRequest request)
+        public async Task<IActionResult> ChangeTicketStatus(string id, [FromBody] ChangeStatusRequest request)
         {
             bool isAdmin = User.IsInRole("Admin");
             bool isHelpdesk = User.IsInRole("Helpdesk");
@@ -132,7 +135,10 @@ namespace otrs_backend.Controllers
 
             try
             {
-                await _ticketService.UpdateStatusAsync(id, request.NewStatusId);
+                var dbId = await _ticketService.GetTicketIdByPublicIdAsync(id);
+                if (dbId == null) return NotFound(new { message = "Nie znaleziono zgłoszenia." });
+
+                await _ticketService.UpdateStatusAsync(dbId.Value, request.NewStatusId);
                 return Ok(new { message = "Status zaktualizowany pomyślnie." });
             }
             catch (Exception ex)
@@ -143,11 +149,14 @@ namespace otrs_backend.Controllers
 
         [HttpPatch("{id}/priority")]
         [Authorize(Roles = "Admin,Helpdesk,Technik")]
-        public async Task<IActionResult> ChangeTicketPriority(int id, [FromBody] ChangePriorityRequest request)
+        public async Task<IActionResult> ChangeTicketPriority(string id, [FromBody] ChangePriorityRequest request)
         {
             try
             {
-                await _ticketService.UpdatePriorityAsync(id, request.NewPriorityId);
+                var dbId = await _ticketService.GetTicketIdByPublicIdAsync(id);
+                if (dbId == null) return NotFound(new { message = "Nie znaleziono zgłoszenia." });
+
+                await _ticketService.UpdatePriorityAsync(dbId.Value, request.NewPriorityId);
                 return Ok(new { message = "Priorytet zaktualizowany pomyślnie." });
             }
             catch (Exception ex)
@@ -158,11 +167,14 @@ namespace otrs_backend.Controllers
 
         [HttpPatch("{id}/category")]
         [Authorize(Roles = "Admin,Helpdesk,Technik")]
-        public async Task<IActionResult> ChangeTicketCategory(int id, [FromBody] ChangeCategoryRequest request)
+        public async Task<IActionResult> ChangeTicketCategory(string id, [FromBody] ChangeCategoryRequest request)
         {
             try
             {
-                await _ticketService.UpdateCategoryAsync(id, request.NewCategoryId);
+                var dbId = await _ticketService.GetTicketIdByPublicIdAsync(id);
+                if (dbId == null) return NotFound(new { message = "Nie znaleziono zgłoszenia." });
+
+                await _ticketService.UpdateCategoryAsync(dbId.Value, request.NewCategoryId);
                 return Ok(new { message = "Kategoria zaktualizowana pomyślnie." });
             }
             catch (Exception ex)
@@ -173,11 +185,14 @@ namespace otrs_backend.Controllers
 
         [HttpPatch("{id}/queue")]
         [Authorize(Roles = "Admin,Helpdesk")]
-        public async Task<IActionResult> ChangeTicketQueue(int id, [FromBody] ChangeQueueRequest request)
+        public async Task<IActionResult> ChangeTicketQueue(string id, [FromBody] ChangeQueueRequest request)
         {
             try
             {
-                await _ticketService.UpdateQueueAsync(id, request.NewQueueId);
+                var dbId = await _ticketService.GetTicketIdByPublicIdAsync(id);
+                if (dbId == null) return NotFound(new { message = "Nie znaleziono zgłoszenia." });
+
+                await _ticketService.UpdateQueueAsync(dbId.Value, request.NewQueueId);
                 return Ok(new { message = "Kolejka zaktualizowana pomyślnie." });
             }
             catch (Exception ex)
@@ -188,11 +203,14 @@ namespace otrs_backend.Controllers
 
         [HttpPatch("{id}/client")]
         [Authorize(Roles = "Admin,Helpdesk")]
-        public async Task<IActionResult> ChangeTicketClient(int id, [FromBody] ChangeClientRequest request)
+        public async Task<IActionResult> ChangeTicketClient(string id, [FromBody] ChangeClientRequest request)
         {
             try
             {
-                await _ticketService.UpdateClientAsync(id, request.NewClientId);
+                var dbId = await _ticketService.GetTicketIdByPublicIdAsync(id);
+                if (dbId == null) return NotFound(new { message = "Nie znaleziono zgłoszenia." });
+
+                await _ticketService.UpdateClientAsync(dbId.Value, request.NewClientId);
                 return Ok(new { message = "Klient zaktualizowany pomyślnie." });
             }
             catch (Exception ex)

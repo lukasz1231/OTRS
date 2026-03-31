@@ -260,6 +260,92 @@ namespace otrs_backend.Services
             return ticket;
         }
 
+        public async Task<TicketDto?> GetTicketByPublicIdAsync(string publicId, int currentUserId)
+        {
+            var userRoles = await GetUserRolesAsync(currentUserId);
+            var canViewContactData = userRoles.Contains("Admin") || userRoles.Contains("Helpdesk") || userRoles.Contains("Technik");
+
+            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
+
+            var ticket = await visibleTicketsQuery
+                .Include(t => t.Client)
+                .Include(t => t.Comments)
+                    .ThenInclude(c => c.User)
+                .Include(t => t.Comments)
+                    .ThenInclude(c => c.Attachments)
+                .Include(t => t.Status)
+                .Include(t => t.Priority)
+                .Include(t => t.Category)
+                .Include(t => t.Type)
+                .Include(t => t.Queue)
+                .Where(t => t.PublicId == publicId)
+                .Select(t => new TicketDto
+                {
+                    Id = t.Id,
+                    PublicId = t.PublicId,
+                    Title = t.Title,
+                    Description = t.Description,
+                    CreatorName = t.Creator.Name + " " + t.Creator.Surname,
+                    CreatorEmail = canViewContactData ? t.Creator.Email : null,
+                    CreatorPhone = canViewContactData ? t.Creator.Phone : null,
+                    ReporterClientName = t.Creator.Client != null ? t.Creator.Client.Name : null,
+                    ReporterClientPhone = canViewContactData && t.Creator.Client != null ? t.Creator.Client.Phone : null,
+                    CreatedAt = t.CreatedAt,
+                    Client = t.Client != null ? t.Client.Name : "Brak klienta",
+                    ClientId = t.ClientId,
+                    Status = t.Status.Name,
+                    StatusId = t.StatusId,
+                    Priority = t.Priority.Name,
+                    PriorityId = t.PriorityId,
+                    PrioritySlaHours = t.Priority.SlaHours,
+                    Category = t.Category.Name,
+                    CategoryId = t.CategoryId,
+                    Type = t.Type.Name,
+                    TypeId = t.TypeId,
+                    Queue = t.Queue.Name,
+                    QueueId = t.QueueId,
+                    ResolvedAtUtc = t.ResolvedAtUtc,
+                    PausedAtUtc = t.PausedAtUtc,
+                    TotalPausedMinutes = t.TotalPausedMinutes,
+                    IsMyTicket = t.CreatorId == currentUserId,
+
+                    Comments = t.Comments.Select(c => new CommentDto
+                    {
+                        Id = c.Id,
+                        Content = c.Content,
+                        CreatedAt = c.CreatedAt,
+                        UserName = $"{c.User.Name} {c.User.Surname}",
+                        UserRole = string.Join(", ", c.User.Roles.Select(r => r.Name)),
+
+                        Attachments = c.Attachments.Select(a => new AttachmentDto
+                        {
+                            Id = a.Id,
+                            FileName = a.FileName,
+                            FilePath = a.FilePath
+                        }).ToList()
+                    })
+                    .OrderBy(c => c.CreatedAt)
+                    .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (ticket != null)
+            {
+                ApplySla(ticket, DateTime.UtcNow);
+            }
+
+            return ticket;
+        }
+
+        public async Task<int?> GetTicketIdByPublicIdAsync(string publicId)
+        {
+            var ticket = await _context.Tickets
+                .Where(t => t.PublicId == publicId)
+                .Select(t => new { t.Id })
+                .FirstOrDefaultAsync();
+            return ticket?.Id;
+        }
+
         private static void ApplySla(TicketDto ticket, DateTime nowUtc)
         {
             ticket.DueAtUtc = ticket.CreatedAt

@@ -167,7 +167,7 @@
 
               <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-100">
                 <button
-                  @click="router.push({ name: 'ticket-details', params: { id: ticket.id } })"
+                  @click="router.push({ name: 'ticket-details', params: { id: ticket.publicId } })"
                   class="flex items-center gap-2 px-5 py-2 bg-white text-[#3B71A3] border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#3B71A3] hover:text-white hover:border-[#3B71A3] transition-all active:scale-95 cursor-pointer shadow-sm"
                 >
                   <span>Zobacz szczegóły</span>

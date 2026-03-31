@@ -281,7 +281,7 @@ const submitTicket = async () => {
       'Zgłoszenie zostało pomyślnie utworzone! Za chwilę zostaniesz przekierowany.'
 
     setTimeout(() => {
-      const ticketId = createdTicket.id || createdTicket.Id
+      const ticketId = createdTicket.publicId || createdTicket.PublicId
       router.push(`/ticket/${ticketId}`)
     }, 2000) 
   } catch (error) {
