@@ -38,6 +38,16 @@
               <span v-if="c.phone" class="flex items-center gap-2 text-gray-500 mt-1 font-medium">
                 📞 {{ c.phone }}
               </span>
+              <span class="flex items-start gap-2 text-gray-500 mt-1">
+                👤
+                <span>
+                  <span class="font-semibold">Konta: </span>
+                  <span v-if="(c.users || []).length > 0">
+                    {{ c.users.map(u => `${u.name} ${u.surname}`).join(', ') }}
+                  </span>
+                  <span v-else>brak przypisanych kont</span>
+                </span>
+              </span>
             </div>
           </div>
 
@@ -157,6 +167,39 @@
               />
               <span v-if="getError('Phone')" class="text-red-500 text-xs mt-1 ml-1 block">{{ getError('Phone')[0] }}</span>
             </div>
+
+            <div>
+              <label class="text-xs font-bold text-gray-500 uppercase ml-1 block mb-2">Podpięte konta użytkowników</label>
+              <input
+                v-model="userSearch"
+                type="text"
+                class="w-full p-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-gray-50 focus:bg-white mb-2"
+                placeholder="Szukaj po imieniu, nazwisku lub emailu"
+              />
+
+              <div class="max-h-44 overflow-y-auto border border-gray-200 rounded-xl bg-gray-50 p-2 space-y-1">
+                <label
+                  v-for="u in filteredUsers"
+                  :key="u.id"
+                  class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white cursor-pointer"
+                >
+                  <input
+                    v-model="selectedUserIds"
+                    :value="u.id"
+                    type="checkbox"
+                    class="w-4 h-4"
+                  />
+                  <span class="text-sm text-gray-700">
+                    {{ u.name }} {{ u.surname }}
+                    <span class="text-gray-500">({{ u.email }})</span>
+                  </span>
+                </label>
+
+                <div v-if="filteredUsers.length === 0" class="text-xs text-gray-500 px-2 py-2">
+                  Brak kont pasujących do wyszukiwania.
+                </div>
+              </div>
+            </div>
             
           </div>
         </div>
@@ -188,14 +231,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, inject, reactive } from 'vue'
+import { ref, onMounted, inject, reactive, computed } from 'vue'
 import axios from 'axios'
 
 const showNotification = inject('showNotification')
 const API_URL = 'https://localhost:7054/api/Admin/clients'
+const USERS_API_URL = 'https://localhost:7054/api/Admin/users'
 const axiosConfig = { withCredentials: true }
 
 const clients = ref([])
+const allUsers = ref([])
+const userSearch = ref('')
+const selectedUserIds = ref([])
 const showModal = ref(false)
 const isEditing = ref(false)
 
@@ -211,6 +258,16 @@ const currentClient = ref({
   streetNumber: '',
   apartmentNumber: '',
   phone: ''
+})
+
+const filteredUsers = computed(() => {
+  const query = userSearch.value.trim().toLowerCase()
+  if (!query) return allUsers.value
+
+  return allUsers.value.filter(u => {
+    const fullName = `${u.name} ${u.surname}`.toLowerCase()
+    return fullName.includes(query) || u.email.toLowerCase().includes(query)
+  })
 })
 
 const confirmModal = reactive({ show: false, message: '', action: null })
@@ -234,7 +291,13 @@ const fetchClients = async () => {
       street: cl.street || cl.Street,
       streetNumber: cl.streetNumber || cl.StreetNumber,
       apartmentNumber: cl.apartmentNumber || cl.ApartmentNumber,
-      phone: cl.phone || cl.Phone
+      phone: cl.phone || cl.Phone,
+      users: (cl.users || cl.Users || []).map(u => ({
+        id: u.id || u.Id,
+        name: u.name || u.Name,
+        surname: u.surname || u.Surname,
+        email: u.email || u.Email
+      }))
     }))
   } catch (e) {
     console.error(e)
@@ -242,9 +305,26 @@ const fetchClients = async () => {
   }
 }
 
+const fetchUsers = async () => {
+  try {
+    const res = await axios.get(USERS_API_URL, axiosConfig)
+    allUsers.value = res.data.map(u => ({
+      id: u.id || u.Id,
+      name: u.name || u.Name,
+      surname: u.surname || u.Surname,
+      email: u.email || u.Email
+    }))
+  } catch (e) {
+    console.error(e)
+    showNotification('Nie udało się pobrać listy kont użytkowników.', 'error')
+  }
+}
+
 const openAddModal = () => {
   isEditing.value = false
   validationErrors.value = {}
+  selectedUserIds.value = []
+  userSearch.value = ''
   currentClient.value = {
     id: null,
     name: '',
@@ -262,6 +342,8 @@ const openAddModal = () => {
 const openEditModal = (client) => {
   isEditing.value = true
   validationErrors.value = {}
+  selectedUserIds.value = (client.users || []).map(u => u.id)
+  userSearch.value = ''
   currentClient.value = { ...client }
   showModal.value = true
 }
@@ -317,12 +399,29 @@ const saveClient = async () => {
 
   // Wyślij do API, jeśli wszystko jest lokalnie poprawne
   try {
+    const payload = {
+      name: currentClient.value.name,
+      description: currentClient.value.description,
+      city: currentClient.value.city,
+      postalCode: currentClient.value.postalCode,
+      street: currentClient.value.street,
+      streetNumber: currentClient.value.streetNumber,
+      apartmentNumber: currentClient.value.apartmentNumber,
+      phone: currentClient.value.phone
+    }
+
     if (isEditing.value) {
-      await axios.put(`${API_URL}/${currentClient.value.id}`, currentClient.value, axiosConfig)
+      await axios.put(`${API_URL}/${currentClient.value.id}`, payload, axiosConfig)
+      await axios.put(`${API_URL}/${currentClient.value.id}/users`, { userIds: selectedUserIds.value }, axiosConfig)
       showNotification('Zaktualizowano dane klienta.', 'success')
     } else {
-      const { id, ...payload } = currentClient.value
-      await axios.post(API_URL, payload, axiosConfig)
+      const createRes = await axios.post(API_URL, payload, axiosConfig)
+      const createdClientId = createRes.data?.id ?? createRes.data?.Id
+
+      if (createdClientId) {
+        await axios.put(`${API_URL}/${createdClientId}/users`, { userIds: selectedUserIds.value }, axiosConfig)
+      }
+
       showNotification('Dodano nowego klienta.', 'success')
     }
 
@@ -356,7 +455,9 @@ const confirmDelete = (client) => {
   confirmModal.show = true
 }
 
-onMounted(fetchClients)
+onMounted(async () => {
+  await Promise.all([fetchClients(), fetchUsers()])
+})
 </script>
 
 <style scoped>

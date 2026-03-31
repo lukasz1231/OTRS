@@ -429,8 +429,8 @@
                     </div>
                   </div>
 
-                  <div v-if="ticket.creatorEmail" class="flex items-start gap-4">
-                    <div class="p-2.5 bg-cyan-50 text-cyan-700 rounded-xl">
+                  <div class="flex items-start gap-4">
+                    <div class="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="20"
@@ -446,7 +446,71 @@
                     </div>
                     <div>
                       <p class="text-[10px] font-bold text-gray-400 uppercase">Email zgłaszającego</p>
-                      <p class="font-bold text-gray-800">{{ ticket.creatorEmail }}</p>
+                      <p class="font-bold text-gray-800">{{ ticket.creatorEmail || 'Brak danych' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start gap-4">
+                    <div class="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase">Telefon zgłaszającego</p>
+                      <p class="font-bold text-gray-800">{{ ticket.creatorPhone || 'Brak danych' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start gap-4">
+                    <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M3 21h18" />
+                        <path d="M5 21V7l8-4 8 4v14" />
+                        <path d="M9 9h.01" />
+                        <path d="M9 13h.01" />
+                        <path d="M9 17h.01" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase">Klient</p>
+                      <p class="font-bold text-gray-800">{{ ticket.reporterClientName || 'Brak danych' }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start gap-4">
+                    <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase">Telefon klienta</p>
+                      <p class="font-bold text-gray-800">{{ ticket.reporterClientPhone || 'Brak danych' }}</p>
                     </div>
                   </div>
 

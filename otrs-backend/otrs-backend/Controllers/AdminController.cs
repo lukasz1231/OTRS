@@ -335,9 +335,29 @@ namespace otrs_backend.Controllers
         #region Zarządzanie Klientami
 
         [HttpGet("clients")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin,Helpdesk")]
         public async Task<IActionResult> GetClients()
-            => Ok(await _context.Clients.ToListAsync());
+            => Ok(await _context.Clients
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.Description,
+                    c.City,
+                    c.PostalCode,
+                    c.Street,
+                    c.StreetNumber,
+                    c.ApartmentNumber,
+                    c.Phone,
+                    Users = c.Users.Select(u => new
+                    {
+                        u.Id,
+                        u.Name,
+                        u.Surname,
+                        u.Email
+                    }).ToList()
+                })
+                .ToListAsync());
 
         [HttpPost("clients")]
         [Authorize(Roles = "Admin")]
@@ -384,6 +404,43 @@ namespace otrs_backend.Controllers
             _context.Clients.Remove(client);
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        [HttpPut("clients/{id}/users")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateClientUsers(int id, [FromBody] UpdateClientUsersRequest request)
+        {
+            var clientExists = await _context.Clients.AnyAsync(c => c.Id == id);
+            if (!clientExists) return NotFound();
+
+            var targetUserIds = (request.UserIds ?? new List<int>()).Distinct().ToList();
+
+            var usersCurrentlyAssignedToClient = await _context.Users
+                .Where(u => u.ClientId == id)
+                .ToListAsync();
+
+            foreach (var user in usersCurrentlyAssignedToClient)
+            {
+                if (!targetUserIds.Contains(user.Id))
+                {
+                    user.ClientId = null;
+                }
+            }
+
+            if (targetUserIds.Count > 0)
+            {
+                var usersToAssign = await _context.Users
+                    .Where(u => targetUserIds.Contains(u.Id))
+                    .ToListAsync();
+
+                foreach (var user in usersToAssign)
+                {
+                    user.ClientId = id;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Przypisania kont zostały zaktualizowane." });
         }
 
         #endregion
@@ -445,4 +502,5 @@ namespace otrs_backend.Controllers
 
     public class UpdateUserRequest { public string Name { get; set; } = string.Empty; public string Surname { get; set; } = string.Empty; public string Email { get; set; } = string.Empty; public string? NewPassword { get; set; } public List<string> Roles { get; set; } = new List<string>(); }
     public class CreateQueueRequest { public string Name { get; set; } = string.Empty; }
+    public class UpdateClientUsersRequest { public List<int> UserIds { get; set; } = new List<int>(); }
 }

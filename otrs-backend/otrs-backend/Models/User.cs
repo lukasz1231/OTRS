@@ -14,8 +14,13 @@ namespace otrs_backend.Models
         [EmailAddress]
         [Required]
         public string Email { get; set; }
+        [Phone(ErrorMessage = "Niepoprawny format telefonu")]
+        public string? Phone { get; set; }
         [Required]
         public string PasswordHash { get; set; }
+
+        public int? ClientId { get; set; }
+        public Client? Client { get; set; }
 
         public string? PasswordResetToken { get; set; }
         public DateTime? PasswordResetTokenExpiry { get; set; }

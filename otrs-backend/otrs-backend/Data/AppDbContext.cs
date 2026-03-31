@@ -37,6 +37,12 @@ namespace otrs_backend.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Client)
+                .WithMany(c => c.Users)
+                .HasForeignKey(u => u.ClientId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             modelBuilder.Entity<Role>()
                 .HasIndex(r => r.Name)
                 .IsUnique();

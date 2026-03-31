@@ -36,5 +36,6 @@ namespace otrs_backend.Models
 
         // Relacja: Jeden klient może mieć wiele kategorii
         public ICollection<Category> Categories { get; set; } = new List<Category>();
+        public ICollection<User> Users { get; set; } = new List<User>();
     }
 }
