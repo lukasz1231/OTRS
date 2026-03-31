@@ -409,6 +409,48 @@
                   </div>
 
                   <div class="flex items-start gap-4">
+                    <div class="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M20 21a8 8 0 0 0-16 0" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase">Zgłaszający</p>
+                      <p class="font-bold text-gray-800">{{ ticket.creatorName || '—' }}</p>
+                    </div>
+                  </div>
+
+                  <div v-if="ticket.creatorEmail" class="flex items-start gap-4">
+                    <div class="p-2.5 bg-cyan-50 text-cyan-700 rounded-xl">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <rect x="2" y="4" width="20" height="16" rx="2" />
+                        <path d="m22 7-10 7L2 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-bold text-gray-400 uppercase">Email zgłaszającego</p>
+                      <p class="font-bold text-gray-800">{{ ticket.creatorEmail }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"

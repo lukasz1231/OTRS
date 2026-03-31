@@ -28,6 +28,8 @@ namespace otrs_backend.Services
         public string PublicId { get; set; } = default!;
         public string Title { get; set; } = default!;
         public string Description { get; set; } = default!;
+        public string CreatorName { get; set; } = default!;
+        public string? CreatorEmail { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Client { get; set; } = default!; // Zwracamy nazwę klienta jako string do frontu
         public string Status { get; set; } = default!;
@@ -124,6 +126,7 @@ namespace otrs_backend.Services
         public async Task<List<TicketDto>> GetMyTicketsAsync(int currentUserId)
         {
             var userRoles = await GetUserRolesAsync(currentUserId);
+            var canViewCreatorEmail = userRoles.Contains("Admin") || userRoles.Contains("Helpdesk");
 
             var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
 
@@ -140,6 +143,8 @@ namespace otrs_backend.Services
                     PublicId = t.PublicId,
                     Title = t.Title,
                     Description = t.Description,
+                    CreatorName = t.Creator.Name + " " + t.Creator.Surname,
+                    CreatorEmail = canViewCreatorEmail ? t.Creator.Email : null,
                     CreatedAt = t.CreatedAt,
                     Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
                     Status = t.Status.Name,
@@ -173,6 +178,7 @@ namespace otrs_backend.Services
         public async Task<TicketDto?> GetTicketByIdAsync(int ticketId, int currentUserId)
         {
             var userRoles = await GetUserRolesAsync(currentUserId);
+            var canViewCreatorEmail = userRoles.Contains("Admin") || userRoles.Contains("Helpdesk");
 
             var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
 
@@ -194,6 +200,8 @@ namespace otrs_backend.Services
                     PublicId = t.PublicId,
                     Title = t.Title,
                     Description = t.Description,
+                    CreatorName = t.Creator.Name + " " + t.Creator.Surname,
+                    CreatorEmail = canViewCreatorEmail ? t.Creator.Email : null,
                     CreatedAt = t.CreatedAt,
                     Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
                     Status = t.Status.Name,
