@@ -187,6 +187,25 @@ const IconTicket = () =>
       h('path', { d: 'M10 20h8v-8' }),
     ],
   )
+const IconPending = () =>
+  h(
+    'svg',
+    {
+      xmlns: 'http://www.w3.org/2000/svg',
+      width: '18',
+      height: '18',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': '2',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    },
+    [
+      h('circle', { cx: '12', cy: '12', r: '10' }),
+      h('polyline', { points: '12 6 12 12 16 14' }),
+    ],
+  )
 const IconAdmin = () =>
   h(
     'svg',
@@ -257,6 +276,11 @@ const menuItems = computed(() => {
     { id: 'dashboard', label: 'Dashboard', icon: IconDashboard },
     { id: 'myTickets', label: 'Zgłoszenia', icon: IconTicket },
   ]
+  const userRoles = userStore.user?.roles || []
+  const hasPendingAccess = userRoles.includes('Admin') || userRoles.includes('Helpdesk')
+  if (hasPendingAccess) {
+    items.push({ id: 'pendingTickets', label: 'Oczekujące', icon: IconPending })
+  }
   if (isAdmin.value) {
     items.push({ id: 'admin', label: 'Admin', icon: IconAdmin })
   }

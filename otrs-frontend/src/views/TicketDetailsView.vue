@@ -91,8 +91,25 @@
 
             <div
               v-if="canChangeStatus"
-              class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"
+              class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"
             >
+              <div class="flex flex-col gap-1">
+                <label class="text-[10px] font-bold text-gray-400 uppercase">Klient</label>
+                <select
+                  v-model="selectedClientId"
+                  @change="updateClient"
+                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option :value="null">Brak klienta</option>
+                  <option
+                    v-for="clientOption in availableClients"
+                    :key="clientOption.id"
+                    :value="clientOption.id"
+                  >
+                    {{ clientOption.name }}
+                  </option>
+                </select>
+              </div>
               <div class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Priorytet</label>
                 <select
@@ -117,7 +134,7 @@
                   class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
                 >
                   <option
-                    v-for="categoryOption in availableCategories"
+                    v-for="categoryOption in filteredCategories"
                     :key="categoryOption.id"
                     :value="categoryOption.id"
                   >
@@ -619,11 +636,20 @@ const availableStatuses = ref([])
 const availablePriorities = ref([])
 const availableCategories = ref([])
 const availableQueues = ref([])
+const availableClients = ref([])
 
 const selectedStatusId = ref(null)
 const selectedPriorityId = ref(null)
 const selectedCategoryId = ref(null)
 const selectedQueueId = ref(null)
+const selectedClientId = ref(null)
+
+const filteredCategories = computed(() => {
+  if (!selectedClientId.value) {
+    return availableCategories.value.filter(c => c.clientId === null)
+  }
+  return availableCategories.value.filter(c => c.clientId === selectedClientId.value || c.clientId === null)
+})
 
 const userStore = useUserStore()
 
@@ -689,6 +715,7 @@ const fetchTicketDetails = async () => {
     selectedPriorityId.value = response.data.priorityId
     selectedCategoryId.value = response.data.categoryId
     selectedQueueId.value = response.data.queueId
+    selectedClientId.value = response.data.clientId
   } catch (error) {
     console.error('Error fetching ticket details:', error)
   } finally {
@@ -720,12 +747,23 @@ const fetchPriorities = async () => {
 
 const fetchCategories = async () => {
   try {
-    const response = await axios.get('https://localhost:7054/api/admin/categories', {
+    const response = await axios.get('https://localhost:7054/api/admin/categories-all', {
       withCredentials: true,
     })
     availableCategories.value = response.data
   } catch (error) {
     console.error('Błąd podczas pobierania kategorii:', error)
+  }
+}
+
+const fetchClients = async () => {
+  try {
+    const response = await axios.get('https://localhost:7054/api/admin/clients', {
+      withCredentials: true,
+    })
+    availableClients.value = response.data
+  } catch (error) {
+    console.error('Błąd podczas pobierania klientów:', error)
   }
 }
 
@@ -781,21 +819,41 @@ const updatePriority = async () => {
 }
 
 const updateCategory = async () => {
-  if (selectedCategoryId.value == null) return
   try {
-    await axios.patch(
-      `https://localhost:7054/api/ticket/${route.params.id}/category`,
-      { newCategoryId: selectedCategoryId.value },
+    await axios.patch(`https://localhost:7054/api/ticket/${route.params.id}/category`, 
+      { newCategoryId: selectedCategoryId.value }, 
       {
         withCredentials: true,
-        headers: { 'Content-Type': 'application/json' },
-      },
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
     )
+    console.log('Kategoria zaktualizowana')
     await fetchTicketDetails()
-    console.log('Kategoria zaktualizowana pomyślnie!')
   } catch (error) {
     console.error('Błąd podczas zmiany kategorii:', error)
-    alert('Nie udało się zmienić kategorii.')
+    alert('Błąd uruchamiania backendu zmiany kategorii.')
+    await fetchTicketDetails()
+  }
+}
+
+const updateClient = async () => {
+  try {
+    await axios.patch(`https://localhost:7054/api/ticket/${route.params.id}/client`, 
+      { newClientId: selectedClientId.value }, 
+      {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+    console.log('Klient zaktualizowany')
+    await fetchTicketDetails()
+  } catch (error) {
+    console.error('Błąd podczas zmiany klienta:', error)
+    alert('Błąd podczas aktualizacji klienta')
     await fetchTicketDetails()
   }
 }
@@ -930,7 +988,7 @@ const shouldShowSlaMessage = (message) => {
 const getStatusColor = (status) => {
   if (status === 'Nowy') return 'bg-green-50 text-green-600 border-green-100'
   if (status === 'W toku') return 'bg-blue-50 text-blue-600 border-blue-100'
-  if (status === 'Rozwiązane' || status === 'Zamknięte')
+  if (status === 'Rozwiązane' || status === 'Zamknięte' || status === 'Wykonane')
     return 'bg-gray-50 text-gray-600 border-gray-100'
   return 'bg-yellow-50 text-yellow-600 border-yellow-100'
 }
@@ -943,7 +1001,7 @@ onMounted(async () => {
   }
 
   if (canChangeStatus.value) {
-    await Promise.all([fetchStatuses(), fetchPriorities(), fetchCategories()])
+    await Promise.all([fetchStatuses(), fetchPriorities(), fetchCategories(), fetchClients()])
   }
 
   if (canChangeQueue.value) {

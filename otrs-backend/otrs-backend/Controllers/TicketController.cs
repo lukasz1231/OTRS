@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using otrs_backend.Requests;
@@ -186,6 +186,21 @@ namespace otrs_backend.Controllers
             }
         }
 
+        [HttpPatch("{id}/client")]
+        [Authorize(Roles = "Admin,Helpdesk")]
+        public async Task<IActionResult> ChangeTicketClient(int id, [FromBody] ChangeClientRequest request)
+        {
+            try
+            {
+                await _ticketService.UpdateClientAsync(id, request.NewClientId);
+                return Ok(new { message = "Klient zaktualizowany pomyślnie." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("statuses")]
         [AllowAnonymous]
         public async Task<IActionResult> GetStatuses()
@@ -216,6 +231,10 @@ namespace otrs_backend.Controllers
         public class ChangeQueueRequest
         {
             public int NewQueueId { get; set; }
+        }
+        public class ChangeClientRequest
+        {
+            public int? NewClientId { get; set; }
         }
     }
 }

@@ -35,6 +35,7 @@ namespace otrs_backend.Services
         public string? ReporterClientPhone { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Client { get; set; } = default!; // Zwracamy nazwę klienta jako string do frontu
+        public int? ClientId { get; set; }
         public string Status { get; set; } = default!;
         public int StatusId { get; set; }
         public string Priority { get; set; } = default!;
@@ -153,6 +154,7 @@ namespace otrs_backend.Services
                     ReporterClientPhone = canViewContactData && t.Creator.Client != null ? t.Creator.Client.Phone : null,
                     CreatedAt = t.CreatedAt,
                     Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
+                    ClientId = t.ClientId,
                     Status = t.Status.Name,
                     StatusId = t.StatusId,
                     Priority = t.Priority.Name,
@@ -213,6 +215,7 @@ namespace otrs_backend.Services
                     ReporterClientPhone = canViewContactData && t.Creator.Client != null ? t.Creator.Client.Phone : null,
                     CreatedAt = t.CreatedAt,
                     Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
+                    ClientId = t.ClientId,
                     Status = t.Status.Name,
                     StatusId = t.StatusId,
                     Priority = t.Priority.Name,
@@ -321,7 +324,7 @@ namespace otrs_backend.Services
             var normalized = NormalizeStatus(status);
             if (string.IsNullOrEmpty(normalized)) return false;
 
-            return normalized.Contains("rozwiaz") || normalized.Contains("zamkniet");
+            return normalized.Contains("rozwiaz") || normalized.Contains("zamkniet") || normalized.Contains("wykonan");
         }
 
         private static bool IsPausedStatus(string status)
@@ -520,6 +523,23 @@ namespace otrs_backend.Services
         public async Task<IEnumerable<Status>> GetAllStatusesAsync()
         {
             return await _context.Statuses.ToListAsync();
+        }
+
+        public async Task UpdateClientAsync(int ticketId, int? newClientId)
+        {
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket == null)
+                throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
+
+            if (newClientId.HasValue)
+            {
+                var exists = await _context.Clients.AnyAsync(c => c.Id == newClientId.Value);
+                if (!exists)
+                    throw new Exception($"Klient o ID '{newClientId.Value}' nie istnieje.");
+            }
+
+            ticket.ClientId = newClientId;
+            await _context.SaveChangesAsync();
         }
     }
 }

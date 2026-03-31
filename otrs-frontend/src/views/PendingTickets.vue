@@ -5,8 +5,8 @@
         
         <div class="flex justify-between items-center mb-8">
           <div>
-            <h1 class="text-3xl font-bold text-przyciskiNiebieski">Moje zgłoszenia</h1>
-            <p class="text-gray-500 mt-1">Lista wszystkich Twoich zgłoszeń</p>
+            <h1 class="text-3xl font-bold text-przyciskiNiebieski">Oczekujące zgłoszenia</h1>
+            <p class="text-gray-500 mt-1">Lista nowych zgłoszeń oczekujących na przypisanie i realizację</p>
           </div>
           
           <button 
@@ -23,38 +23,22 @@
 
         <div class="flex flex-col md:flex-row gap-4 mb-8">
           <div class="flex flex-wrap gap-4 mb-4">
-  <div class="flex bg-gray-100 p-1 rounded-xl">
-    <button 
-      v-for="filter in statusFilters" 
-      :key="filter"
-      @click="activeStatusFilter = filter"
-      :class="[
-        'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
-        activeStatusFilter === filter 
-          ? 'bg-white text-przyciskiNiebieski shadow-sm' 
-          : 'text-gray-500 hover:text-gray-700'
-      ]"
-    >
-      {{ filter }}
-    </button>
-  </div>
-
-  <div class="flex bg-gray-100 p-1 rounded-xl">
-    <button 
-      v-for="priority in priorityFilters" 
-      :key="priority"
-      @click="activePriorityFilter = priority"
-      :class="[
-        'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
-        activePriorityFilter === priority 
-          ? 'bg-white text-przyciskiNiebieski shadow-sm' 
-          : 'text-gray-500 hover:text-gray-700'
-      ]"
-    >
-      {{ priority }}
-    </button>
-  </div>
-</div>
+            <div class="flex bg-gray-100 p-1 rounded-xl">
+              <button 
+                v-for="priority in priorityFilters" 
+                :key="priority"
+                @click="activePriorityFilter = priority"
+                :class="[
+                  'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
+                  activePriorityFilter === priority 
+                    ? 'bg-white text-przyciskiNiebieski shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                ]"
+              >
+                {{ priority }}
+              </button>
+            </div>
+          </div>
 
           <div class="relative flex-grow">
             <input 
@@ -73,7 +57,7 @@
         </div>
 
         <div v-if="filteredTickets.length === 0" class="text-center py-20 bg-gray-50 rounded-xl">
-          <p class="text-gray-500">Brak zgłoszeń</p>
+          <p class="text-gray-500">Brak oczekujących zgłoszeń</p>
         </div>
 
         <div v-else class="space-y-4">
@@ -113,7 +97,7 @@
                 @click="router.push({ name: 'ticket-details', params: { id: ticket.id } })"
                 class="flex items-center gap-2 px-5 py-2 bg-white text-[#3B71A3] border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#3B71A3] hover:text-white hover:border-[#3B71A3] transition-all active:scale-95 cursor-pointer shadow-sm"
               >
-                <span>Zobacz szczegóły</span>
+                <span>Rozpocznij obsługę / Edytuj</span>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="14"
@@ -145,43 +129,33 @@ import axios from 'axios'
 const router = useRouter()
 const userStore = useUserStore()
 
-const statusFilters = ['Wszystkie', 'W toku', 'Zakończone']
 const priorityFilters = ['Wszystkie', 'Niski', 'Średni', 'Wysoki', 'Krytyczny']
-
-const activeStatusFilter = ref('Wszystkie')
 const activePriorityFilter = ref('Wszystkie')
 const searchQuery = ref('')
 const tickets = ref([])
 
-const activeFilter = ref('Wszystkie')
-
 const axiosConfig = { withCredentials: true }
 
-const fetchMyTickets = async () => {
+const fetchPendingTickets = async () => {
   try {
     const response = await axios.get('/api/ticket', axiosConfig)
-    tickets.value = Array.isArray(response.data) ? response.data : []
+    if (Array.isArray(response.data)) {
+      tickets.value = response.data.filter(t => getNormalizedStatus(t.status) === 'Nowy')
+    } else {
+      tickets.value = []
+    }
   } catch (error) {
-    console.error('Błąd podczas pobierania zgłoszeń:', error)
+    console.error('Błąd podczas pobierania oczekujących zgłoszeń:', error)
     tickets.value = []
   }
 }
 
 onMounted(() => {
-  fetchMyTickets()
+  fetchPendingTickets()
 })
 
 const filteredTickets = computed(() => {
   return tickets.value.filter(ticket => {
-    const normalizedStatus = getNormalizedStatus(ticket.status)
-
-    const userRoles = userStore.user?.roles || []
-    const isResolver = userRoles.includes('Admin') || userRoles.includes('Helpdesk')
-    if (isResolver && normalizedStatus === 'Nowy') return false
-
-    if (activeStatusFilter.value === 'W toku' && normalizedStatus !== 'W toku') return false
-    if (activeStatusFilter.value === 'Zakończone' && normalizedStatus !== 'Rozwiązane') return false
-    
     if (activePriorityFilter.value !== 'Wszystkie' && ticket.priority !== activePriorityFilter.value) return false
 
     if (searchQuery.value) {
@@ -258,14 +232,6 @@ const getSlaBadgeClass = (slaState) => {
   if (slaState === 'warning') return 'bg-amber-100 text-amber-700'
   if (slaState === 'paused') return 'bg-slate-100 text-slate-700'
   return 'bg-emerald-100 text-emerald-700'
-}
-
-const getSlaTextClass = (slaState) => {
-  if (slaState === 'breached') return 'text-red-700'
-  if (slaState === 'critical') return 'text-rose-700'
-  if (slaState === 'warning') return 'text-amber-700'
-  if (slaState === 'paused') return 'text-slate-700'
-  return 'text-emerald-700'
 }
 
 const goToCreateTicket = () => {

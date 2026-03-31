@@ -20,6 +20,7 @@ import AdminStatuses from '@/views/AdminStatuses.vue'
 import AdminPriorities from '@/views/AdminPriorities.vue'
 import AdminCategories from '@/views/AdminCategories.vue'
 import MyTickets from '@/views/MyTickets.vue'
+import PendingTickets from '@/views/PendingTickets.vue'
 import AdminClients from '@/views/AdminClients.vue'
 import AdminTypes from '@/views/AdminTypes.vue'
 
@@ -175,6 +176,12 @@ routes: [
       name: 'myTickets',
       component: MyTickets,
       meta: { requiresAuth: true, title: 'Moje zgłoszenia – OTRS' }
+    },
+    {
+      path: '/pending-tickets',
+      name: 'pendingTickets',
+      component: PendingTickets,
+      meta: { requiresAuth: true, title: 'Oczekujące zgłoszenia – OTRS' }
     }
   ],
 })
@@ -201,7 +208,16 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAdmin && !isAdmin) {
     return next({ name: 'dashboard' })
   }
-   if (to.name === 'problemReportHelpdesk') {
+   if (to.name === 'pendingTickets') {
+    const hasPendingAccess = userStore.user?.roles?.some(role => 
+      ['Admin', 'Helpdesk'].includes(role)
+    )
+    if (!hasPendingAccess) {
+      return next({ name: 'dashboard' })
+    }
+  }
+
+  if (to.name === 'problemReportHelpdesk') {
     const hasHelpdeskAccess = userStore.user?.roles?.some(role => 
       ['Admin', 'Helpdesk', 'Technik'].includes(role)
     )

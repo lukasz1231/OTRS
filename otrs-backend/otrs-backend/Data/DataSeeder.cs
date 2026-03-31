@@ -19,6 +19,12 @@ namespace otrs_backend.Data
                 context.Roles.AddRange(roles);
                 context.SaveChanges();
             }
+
+            if (!context.Statuses.Any(s => s.Name == "Wykonane"))
+            {
+                context.Statuses.Add(new Status { Name = "Wykonane", Description = "Zadanie zrealizowane przez technika" });
+                context.SaveChanges();
+            }
         }
     }
 }
