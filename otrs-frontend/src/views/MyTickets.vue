@@ -22,21 +22,39 @@
         </div>
 
         <div class="flex flex-col md:flex-row gap-4 mb-8">
-          <div class="flex bg-gray-100 p-1 rounded-xl">
-            <button 
-              v-for="filter in filters" 
-              :key="filter"
-              @click="activeFilter = filter"
-              :class="[
-                'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
-                activeFilter === filter 
-                  ? 'bg-white text-przyciskiNiebieski shadow-sm' 
-                  : 'text-gray-500 hover:text-gray-700'
-              ]"
-            >
-              {{ filter }}
-            </button>
-          </div>
+          <div class="flex flex-wrap gap-4 mb-4">
+  <div class="flex bg-gray-100 p-1 rounded-xl">
+    <button 
+      v-for="filter in statusFilters" 
+      :key="filter"
+      @click="activeStatusFilter = filter"
+      :class="[
+        'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
+        activeStatusFilter === filter 
+          ? 'bg-white text-przyciskiNiebieski shadow-sm' 
+          : 'text-gray-500 hover:text-gray-700'
+      ]"
+    >
+      {{ filter }}
+    </button>
+  </div>
+
+  <div class="flex bg-gray-100 p-1 rounded-xl">
+    <button 
+      v-for="priority in priorityFilters" 
+      :key="priority"
+      @click="activePriorityFilter = priority"
+      :class="[
+        'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
+        activePriorityFilter === priority 
+          ? 'bg-white text-przyciskiNiebieski shadow-sm' 
+          : 'text-gray-500 hover:text-gray-700'
+      ]"
+    >
+      {{ priority }}
+    </button>
+  </div>
+</div>
 
           <div class="relative flex-grow">
             <input 
@@ -127,11 +145,15 @@ import axios from 'axios'
 const router = useRouter()
 const userStore = useUserStore()
 
-const filters = ['Wszystkie', 'W toku', 'Zakończone']
+const statusFilters = ['Wszystkie', 'W toku', 'Zakończone']
+const priorityFilters = ['Wszystkie', 'Niski', 'Średni', 'Wysoki', 'Krytyczny']
 
-const activeFilter = ref('Wszystkie')
+const activeStatusFilter = ref('Wszystkie')
+const activePriorityFilter = ref('Wszystkie')
 const searchQuery = ref('')
 const tickets = ref([])
+
+const activeFilter = ref('Wszystkie')
 
 const axiosConfig = { withCredentials: true }
 
@@ -153,9 +175,11 @@ const filteredTickets = computed(() => {
   return tickets.value.filter(ticket => {
     const normalizedStatus = getNormalizedStatus(ticket.status)
 
-    if (activeFilter.value === 'W toku' && normalizedStatus !== 'W toku') return false
-    if (activeFilter.value === 'Zakończone' && normalizedStatus !== 'Rozwiązane') return false
+    if (activeStatusFilter.value === 'W toku' && normalizedStatus !== 'W toku') return false
+    if (activeStatusFilter.value === 'Zakończone' && normalizedStatus !== 'Rozwiązane') return false
     
+    if (activePriorityFilter.value !== 'Wszystkie' && ticket.priority !== activePriorityFilter.value) return false
+
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
       const title = (ticket.title || '').toLowerCase()
