@@ -201,6 +201,15 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAdmin && !isAdmin) {
     return next({ name: 'dashboard' })
   }
+   if (to.name === 'problemReportHelpdesk') {
+    const hasHelpdeskAccess = userStore.user?.roles?.some(role => 
+      ['Admin', 'Helpdesk', 'Technik'].includes(role)
+    )
+    if (!hasHelpdeskAccess) {
+      return next({ name: 'problemReportClient' })
+    }
+  }
+
   next()
 })
 
