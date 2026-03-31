@@ -8,7 +8,7 @@ namespace otrs_backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Helpdesk")] 
+    [Authorize(Roles = "Admin,Helpdesk,Technik")] 
     public class AdminController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -335,7 +335,7 @@ namespace otrs_backend.Controllers
         #region Zarządzanie Klientami
 
         [HttpGet("clients")]
-        [Authorize(Roles = "Admin,Helpdesk")]
+        [Authorize(Roles = "Admin,Helpdesk,Technik")]
         public async Task<IActionResult> GetClients()
             => Ok(await _context.Clients
                 .Select(c => new
