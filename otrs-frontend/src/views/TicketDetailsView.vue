@@ -58,6 +58,7 @@
                     v-for="statusOption in availableStatuses"
                     :key="statusOption.id"
                     :value="statusOption.id"
+                    :disabled="isTechnicianOnly && statusOption.id !== 3 && statusOption.id !== 4"
                   >
                     {{ statusOption.name }}
                   </option>
@@ -88,27 +89,54 @@
               </div>
             </div>
 
-            <div v-if="canChangeStatus" class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div
+              v-if="canChangeStatus"
+              class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"
+            >
               <div class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Priorytet</label>
-                <select v-model="selectedPriorityId" @change="updatePriority" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                  <option v-for="priorityOption in availablePriorities" :key="priorityOption.id" :value="priorityOption.id">
+                <select
+                  v-model="selectedPriorityId"
+                  @change="updatePriority"
+                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option
+                    v-for="priorityOption in availablePriorities"
+                    :key="priorityOption.id"
+                    :value="priorityOption.id"
+                  >
                     {{ priorityOption.name }}
                   </option>
                 </select>
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Kategoria</label>
-                <select v-model="selectedCategoryId" @change="updateCategory" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                  <option v-for="categoryOption in availableCategories" :key="categoryOption.id" :value="categoryOption.id">
+                <select
+                  v-model="selectedCategoryId"
+                  @change="updateCategory"
+                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option
+                    v-for="categoryOption in availableCategories"
+                    :key="categoryOption.id"
+                    :value="categoryOption.id"
+                  >
                     {{ categoryOption.name }}
                   </option>
                 </select>
               </div>
               <div v-if="canChangeQueue" class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Kolejka</label>
-                <select v-model="selectedQueueId" @change="updateQueue" class="border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                  <option v-for="queueOption in availableQueues" :key="queueOption.id" :value="queueOption.id">
+                <select
+                  v-model="selectedQueueId"
+                  @change="updateQueue"
+                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option
+                    v-for="queueOption in availableQueues"
+                    :key="queueOption.id"
+                    :value="queueOption.id"
+                  >
                     {{ queueOption.name }}
                   </option>
                 </select>
@@ -531,11 +559,25 @@
                     </div>
                     <div>
                       <p class="text-[10px] font-bold text-gray-400 uppercase">SLA do</p>
-                      <p class="font-bold text-gray-800">{{ formatDate(ticket.dueAtUtc ?? ticket.DueAtUtc) }}</p>
-                      <p :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)" class="text-xs font-semibold mt-1">
-                        {{ formatSlaRemaining(ticket.remainingMinutes ?? ticket.RemainingMinutes, ticket.slaState ?? ticket.SlaState) }}
+                      <p class="font-bold text-gray-800">
+                        {{ formatDate(ticket.dueAtUtc ?? ticket.DueAtUtc) }}
                       </p>
-                      <p v-if="shouldShowSlaMessage(ticket.slaMessage ?? ticket.SlaMessage)" :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)" class="text-[11px] font-medium mt-1">
+                      <p
+                        :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)"
+                        class="text-xs font-semibold mt-1"
+                      >
+                        {{
+                          formatSlaRemaining(
+                            ticket.remainingMinutes ?? ticket.RemainingMinutes,
+                            ticket.slaState ?? ticket.SlaState,
+                          )
+                        }}
+                      </p>
+                      <p
+                        v-if="shouldShowSlaMessage(ticket.slaMessage ?? ticket.SlaMessage)"
+                        :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)"
+                        class="text-[11px] font-medium mt-1"
+                      >
                         {{ ticket.slaMessage ?? ticket.SlaMessage }}
                       </p>
                     </div>
@@ -584,6 +626,23 @@ const selectedCategoryId = ref(null)
 const selectedQueueId = ref(null)
 
 const userStore = useUserStore()
+
+const isTechnicianOnly = computed(() => {
+  const userRoles = userStore.user?.roles
+  if (!userRoles) return false
+
+  let rolesArray = []
+  if (Array.isArray(userRoles)) {
+    rolesArray = userRoles
+  } else if (typeof userRoles === 'string') {
+    rolesArray = userRoles.split(',').map((r) => r.trim())
+  }
+
+  const isAdminOrHelpdesk = rolesArray.some((role) => role === 'Admin' || role === 'Helpdesk')
+
+  // Zwraca true, jeśli ma rolę Technik, ale NIE MA roli Admin lub Helpdesk
+  return rolesArray.includes('Technik') && !isAdminOrHelpdesk
+})
 
 const canChangeStatus = computed(() => {
   if (!userStore.user || !userStore.user.roles) return false

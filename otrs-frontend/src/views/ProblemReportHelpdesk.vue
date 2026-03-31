@@ -174,11 +174,14 @@
 </template>
 
 <script setup>
+import { useUserStore } from '@/stores/user'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const router = useRouter()
+const userStore = useUserStore()
+
 const API_BASE_URL = 'https://localhost:7054/api/Admin'
 const axiosConfig = { withCredentials: true }
 
@@ -205,6 +208,15 @@ const queues = ref([])
 
 // POBIERANIE WSZYSTKIEGO Z BAZY PRZY STARCIE
 onMounted(async () => {
+    const user = userStore.user
+  const hasAccess = user?.roles?.some(role => 
+    ['Admin', 'Helpdesk', 'Technik'].includes(role)
+  )
+  
+  if (!hasAccess) {
+    router.push({ name: 'problemReportClient' })
+    return
+  }
   try {
     const [resTypes, resPrios, resCats, resQueues, resClients] = await Promise.all([
       axios.get(`${API_BASE_URL}/types`, axiosConfig),

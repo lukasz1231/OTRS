@@ -129,9 +129,11 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 import axios from 'axios'
 
 const router = useRouter()
+const userStore = useUserStore()
 const API_BASE_URL = 'https://localhost:7054/api/Admin'
 const axiosConfig = { withCredentials: true }
 
@@ -146,12 +148,21 @@ const form = reactive({
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const isLoading = ref(true)
 
 const types = ref([])
 const priorities = ref([])
 const categories = ref([])
 
 onMounted(async () => {
+    const user = userStore.user
+  const hasHelpdeskAccess = user?.roles?.some(role => 
+    ['Admin', 'Helpdesk', 'Technik'].includes(role)
+  )
+  if (hasHelpdeskAccess) {
+    router.push({ name: 'problemReportHelpdesk' })
+    return
+  }
   try {
     const [resTypes, resPrios, resCats] = await Promise.all([
       axios.get(`${API_BASE_URL}/types`, axiosConfig),
@@ -165,6 +176,8 @@ onMounted(async () => {
   } catch (error) {
     console.error('Błąd ładowania danych słownikowych:', error)
     errorMessage.value = 'Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API.'
+  }finally {
+    isLoading.value = false
   }
 })
 

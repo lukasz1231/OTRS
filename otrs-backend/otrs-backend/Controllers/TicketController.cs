@@ -118,6 +118,18 @@ namespace otrs_backend.Controllers
         [Authorize(Roles = "Admin,Helpdesk,Technik")]
         public async Task<IActionResult> ChangeTicketStatus(int id, [FromBody] ChangeStatusRequest request)
         {
+            bool isAdmin = User.IsInRole("Admin");
+            bool isHelpdesk = User.IsInRole("Helpdesk");
+            bool isTechnik = User.IsInRole("Technik");
+
+            if (isTechnik && !isAdmin && !isHelpdesk)
+            {
+                if (request.NewStatusId != 3 && request.NewStatusId != 4)
+                {
+                    return StatusCode(403, new { message = "Brak uprawnień. Technik może zmienić status jedynie na 'Rozwiązane' (3) lub 'Wstrzymane' (4)." });
+                }
+            }
+
             try
             {
                 await _ticketService.UpdateStatusAsync(id, request.NewStatusId);
