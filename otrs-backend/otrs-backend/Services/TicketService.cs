@@ -532,6 +532,11 @@ namespace otrs_backend.Services
             {
                 throw new Exception($"Status o ID '{newStatusId}' nie istnieje.");
             }
+            
+            if (!IsStatusTransitionAllowed(ticket.StatusId, newStatusId))
+            {
+                throw new Exception($"Przejście z statusu o ID '{ticket.StatusId}' do statusu o ID '{newStatusId}' nie jest dozwolone.");
+            }
 
             ticket.StatusId = newStatusId;
 
@@ -626,6 +631,32 @@ namespace otrs_backend.Services
 
             ticket.ClientId = newClientId;
             await _context.SaveChangesAsync();
+        }
+        private bool IsStatusTransitionAllowed(int oldStatusId, int newStatusId)
+        {
+            var allowedTransitions = new Dictionary<int, List<int>>
+            {
+                // 1: Nowy
+                { 1, new List<int> { 2, 4, 5 } },     // Nowy -> W toku, Wstrzymane, Oczekuje na odpowiedź klienta
+                
+                // 2: W toku
+                { 2, new List<int> { 1, 3, 4, 5 } },  // W toku -> Nowy, Rozwiązane, Wstrzymane, Oczekuje na odpowiedź klienta
+                
+                // 3: Rozwiązane
+                { 3, new List<int> { 6 } },           // Rozwiązane -> Wykonane (tylko do wykonania)
+                
+                // 4: Wstrzymane
+                { 4, new List<int> { 2 } },           // Wstrzymane -> W toku (wznowienie)
+                
+                // 5: Oczekuje na odpowiedź klienta
+                { 5, new List<int> { 2 } },           // Oczekuje na odpowiedź klienta -> W toku (po odpowiedzi)
+                
+                // 6: Wykonane
+                { 6, new List<int> { } }              // Wykonane -> brak przejść (koniec)
+            };
+
+            return allowedTransitions.ContainsKey(oldStatusId) && 
+                allowedTransitions[oldStatusId].Contains(newStatusId);
         }
     }
 }
