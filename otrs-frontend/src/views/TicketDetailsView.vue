@@ -2,29 +2,16 @@
   <div class="min-h-screen bg-[#F8FAFC] font-sans antialiased text-gray-900 pb-12">
     <nav class="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div class="max-w-5xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
-        <button
-          @click="router.push({ name: 'profile' })"
-          class="flex items-center gap-2 text-gray-500 hover:text-[#3B71A3] transition-colors font-bold text-sm group"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="group-hover:-translate-x-1 transition-transform"
-          >
+        <button @click="router.push({ name: 'profile' })"
+          class="flex items-center gap-2 text-gray-500 hover:text-[#3B71A3] transition-colors font-bold text-sm group">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+            class="group-hover:-translate-x-1 transition-transform">
             <path d="m15 18-6-6 6-6" />
           </svg>
           <span class="hidden md:inline">Powrót do listy</span>
         </button>
-        <div
-          class="text-[10px] md:text-xs font-mono font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full"
-        >
+        <div class="text-[10px] md:text-xs font-mono font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
           {{ ticket?.publicId || `Zgłoszenie #${route.params.id}` }}
         </div>
       </div>
@@ -36,124 +23,81 @@
       </div>
 
       <div v-else-if="ticket" class="space-y-6">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
           <div class="p-6 md:p-8">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h1
-                class="text-xl md:text-2xl font-semibold text-gray-800 tracking-tight leading-tight"
-              >
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-20">
+              <h1 class="text-xl md:text-2xl font-semibold text-gray-800 tracking-tight leading-tight">
                 {{ ticket.title }}
               </h1>
 
               <div v-if="canChangeStatus" class="relative">
-                <select
-                  v-model="selectedStatusId"
-                  @change="updateStatus"
-                  :class="[
-                    getStatusColor(ticket.status),
-                    'appearance-none cursor-pointer px-4 py-1.5 pr-8 rounded-full text-[11px] font-bold uppercase tracking-wider border h-fit flex items-center justify-center min-w-[100px] self-start md:self-center focus:outline-none focus:ring-2 focus:ring-[#3B71A3]/50 transition-shadow',
-                  ]"
-                >
-                  <option
-                    v-for="statusOption in availableStatuses"
-                    :key="statusOption.id"
-                    :value="statusOption.id"
-                    :disabled="isTechnicianOnly && statusOption.id !== 3 && statusOption.id !== 4"
-                  >
+                <div @click="isStatusDropdownOpen = !isStatusDropdownOpen" :class="[
+                  getStatusBadgeClasses(currentStatusName),
+                  'cursor-pointer px-4 py-1.5 pr-8 rounded-full text-[11px] font-bold uppercase tracking-wider border h-fit flex items-center justify-center min-w-[120px] self-start md:self-center transition-shadow shadow-sm hover:shadow relative select-none'
+                ]">
+                  {{ currentStatusName }}
+                  <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none opacity-70">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div v-if="isStatusDropdownOpen" @click="isStatusDropdownOpen = false" class="fixed inset-0 z-30"></div>
+
+                <div v-if="isStatusDropdownOpen"
+                  class="absolute z-40 mt-2 min-w-[160px] bg-white border border-gray-100 rounded-xl shadow-lg p-2 flex flex-col gap-1 right-0 md:left-1/2 md:right-auto md:-translate-x-1/2">
+                  <div v-for="statusOption in availableStatuses" :key="statusOption.id"
+                    @click="handleStatusSelect(statusOption.id)" :class="[
+                      getStatusBadgeClasses(statusOption.name),
+                      'cursor-pointer px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider border border-transparent text-center transition-all active:scale-95 hover:opacity-80',
+                      (isTechnicianOnly && statusOption.id !== 3 && statusOption.id !== 4) ? 'opacity-40 grayscale cursor-not-allowed pointer-events-none' : ''
+                    ]">
                     {{ statusOption.name }}
-                  </option>
-                </select>
-                <div
-                  class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-current opacity-70"
-                >
-                  <svg
-                    class="fill-current h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"
-                    />
-                  </svg>
+                  </div>
                 </div>
               </div>
 
-              <div
-                v-else
-                :class="[
-                  getStatusColor(ticket.status),
-                  'px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border h-fit flex items-center justify-center min-w-[100px] self-start md:self-center cursor-default',
-                ]"
-              >
-                {{ ticket.status }}
-              </div>
+              <StatusBadge v-else :status="ticket.status"
+                class="min-w-[100px] self-start md:self-center cursor-default" />
             </div>
 
-            <div
-              v-if="canChangeStatus"
-              class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"
-            >
+            <div v-if="canChangeStatus" class="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 relative z-10">
               <div class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Klient</label>
-                <select
-                  v-model="selectedClientId"
-                  @change="updateClient"
-                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                >
+                <select v-model="selectedClientId" @change="updateClient"
+                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
                   <option :value="null">Brak klienta</option>
-                  <option
-                    v-for="clientOption in availableClients"
-                    :key="clientOption.id"
-                    :value="clientOption.id"
-                  >
+                  <option v-for="clientOption in availableClients" :key="clientOption.id" :value="clientOption.id">
                     {{ clientOption.name }}
                   </option>
                 </select>
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Priorytet</label>
-                <select
-                  v-model="selectedPriorityId"
-                  @change="updatePriority"
-                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                >
-                  <option
-                    v-for="priorityOption in availablePriorities"
-                    :key="priorityOption.id"
-                    :value="priorityOption.id"
-                  >
+                <select v-model="selectedPriorityId" @change="updatePriority"
+                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                  <option v-for="priorityOption in availablePriorities" :key="priorityOption.id"
+                    :value="priorityOption.id">
                     {{ priorityOption.name }}
                   </option>
                 </select>
               </div>
               <div class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Kategoria</label>
-                <select
-                  v-model="selectedCategoryId"
-                  @change="updateCategory"
-                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                >
-                  <option
-                    v-for="categoryOption in filteredCategories"
-                    :key="categoryOption.id"
-                    :value="categoryOption.id"
-                  >
+                <select v-model="selectedCategoryId" @change="updateCategory"
+                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                  <option v-for="categoryOption in filteredCategories" :key="categoryOption.id"
+                    :value="categoryOption.id">
                     {{ categoryOption.name }}
                   </option>
                 </select>
               </div>
               <div v-if="canChangeQueue" class="flex flex-col gap-1">
                 <label class="text-[10px] font-bold text-gray-400 uppercase">Kolejka</label>
-                <select
-                  v-model="selectedQueueId"
-                  @change="updateQueue"
-                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                >
-                  <option
-                    v-for="queueOption in availableQueues"
-                    :key="queueOption.id"
-                    :value="queueOption.id"
-                  >
+                <select v-model="selectedQueueId" @change="updateQueue"
+                  class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                  <option v-for="queueOption in availableQueues" :key="queueOption.id" :value="queueOption.id">
                     {{ queueOption.name }}
                   </option>
                 </select>
@@ -176,72 +120,45 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div class="lg:col-span-2 order-2 lg:order-1 space-y-6">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
-              <h3
-                class="text-[11px] font-black uppercase text-[#3B71A3] tracking-[0.2em] mb-4 flex items-center gap-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="3"
-                >
+              <h3 class="text-[11px] font-black uppercase text-[#3B71A3] tracking-[0.2em] mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="3">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
                 Treść zgłoszenia
               </h3>
               <div
-                class="text-gray-700 leading-relaxed whitespace-pre-wrap text-base md:text-lg italic font-medium break-all"
-              >
+                class="text-gray-700 leading-relaxed whitespace-pre-wrap text-base md:text-lg italic font-medium break-all">
                 "{{ ticket.description }}"
               </div>
             </div>
 
-            <div
-              class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col"
-            >
-              <div
-                class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between"
-              >
-                <h3
-                  class="text-[11px] font-black uppercase text-gray-500 tracking-[0.2em] flex items-center gap-2"
-                >
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+              <div class="p-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                <h3 class="text-[11px] font-black uppercase text-gray-500 tracking-[0.2em] flex items-center gap-2">
                   Konwersacja
                 </h3>
-                <span
-                  class="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full font-bold"
-                >
+                <span class="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full font-bold">
                   {{ ticket.comments?.length || 0 }} wiadomości
                 </span>
               </div>
 
               <div class="p-6 space-y-6 max-h-[500px] overflow-y-auto bg-white">
-                <div
-                  v-if="!ticket.comments || ticket.comments.length === 0"
-                  class="text-center py-8 text-gray-400 italic text-sm"
-                >
+                <div v-if="!ticket.comments || ticket.comments.length === 0"
+                  class="text-center py-8 text-gray-400 italic text-sm">
                   Brak komentarzy. Rozpocznij dyskusję poniżej.
                 </div>
 
-                <div
-                  v-for="comment in ticket.comments"
-                  :key="comment.id"
-                  class="flex flex-col gap-1"
-                >
+                <div v-for="comment in ticket.comments" :key="comment.id" class="flex flex-col gap-1">
                   <div class="flex items-center gap-2 px-1">
                     <span class="text-[11px] font-bold text-[#3B71A3] uppercase">
                       {{ comment.userName }}
                     </span>
 
-                    <span
-                      v-if="comment.userRole"
-                      :class="[
-                        'text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider',
-                        getRoleBadgeColor(comment.userRole),
-                      ]"
-                    >
+                    <span v-if="comment.userRole" :class="[
+                      'text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider',
+                      getRoleBadgeColor(comment.userRole),
+                    ]">
                       {{ comment.userRole }}
                     </span>
 
@@ -251,36 +168,20 @@
                   </div>
 
                   <div
-                    class="bg-gray-50 rounded-2xl rounded-tl-none p-4 text-sm text-gray-700 border border-gray-200 max-w-[90%] md:max-w-[85%] shadow-sm"
-                  >
+                    class="bg-gray-50 rounded-2xl rounded-tl-none p-4 text-sm text-gray-700 border border-gray-200 max-w-[90%] md:max-w-[85%] shadow-sm">
                     <div class="whitespace-pre-wrap break-words">{{ comment.content }}</div>
 
-                    <div
-                      v-if="comment.attachments && comment.attachments.length > 0"
-                      class="mt-3 pt-3 border-t border-gray-200 space-y-2"
-                    >
-                      <div
-                        v-for="file in comment.attachments"
-                        :key="file.id"
-                        class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 text-xs"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="#3B71A3"
-                          stroke-width="2"
-                        >
+                    <div v-if="comment.attachments && comment.attachments.length > 0"
+                      class="mt-3 pt-3 border-t border-gray-200 space-y-2">
+                      <div v-for="file in comment.attachments" :key="file.id"
+                        class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 text-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                          stroke="#3B71A3" stroke-width="2">
                           <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
                           <polyline points="13 2 13 9 20 9" />
                         </svg>
-                        <a
-                          :href="`https://localhost:7054${file.filePath}`"
-                          target="_blank"
-                          class="text-[#3B71A3] font-bold hover:underline truncate max-w-[200px]"
-                        >
+                        <a :href="`https://localhost:7054${file.filePath}`" target="_blank"
+                          class="text-[#3B71A3] font-bold hover:underline truncate max-w-[200px]">
                           {{ file.fileName }}
                         </a>
                       </div>
@@ -291,86 +192,45 @@
 
               <div class="p-4 bg-gray-50 border-t border-gray-100">
                 <div v-if="selectedFiles.length > 0" class="flex flex-wrap gap-2 mb-3">
-                  <div
-                    v-for="(file, index) in selectedFiles"
-                    :key="index"
-                    class="bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 shadow-sm"
-                  >
+                  <div v-for="(file, index) in selectedFiles" :key="index"
+                    class="bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 shadow-sm">
                     <span class="truncate max-w-[150px] font-medium text-[#3B71A3]">{{
                       file.name
                     }}</span>
                     <span class="text-gray-400">({{ (file.size / 1024).toFixed(1) }} KB)</span>
-                    <button
-                      @click="removeFile(index)"
-                      class="text-gray-400 hover:text-red-500 font-bold ml-1 transition-colors"
-                    >
+                    <button @click="removeFile(index)"
+                      class="text-gray-400 hover:text-red-500 font-bold ml-1 transition-colors">
                       ×
                     </button>
                   </div>
                 </div>
 
                 <div class="flex gap-2">
-                  <input
-                    type="file"
-                    ref="fileInput"
-                    multiple
-                    class="hidden"
-                    @change="handleFileChange"
-                  />
-                  <button
-                    @click="$refs.fileInput.click()"
+                  <input type="file" ref="fileInput" multiple class="hidden" @change="handleFileChange" />
+                  <button @click="$refs.fileInput.click()"
                     class="p-2.5 text-gray-400 hover:text-[#3B71A3] hover:bg-white rounded-xl transition-all border border-transparent hover:border-gray-200"
-                    title="Dodaj załączniki"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    title="Dodaj załączniki">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <path
-                        d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48"
-                      />
+                        d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                     </svg>
                   </button>
 
-                  <input
-                    v-model="newComment"
-                    @keyup.enter="sendComment"
-                    type="text"
+                  <input v-model="newComment" @keyup.enter="sendComment" type="text"
                     placeholder="Wpisz treść komentarza..."
-                    class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#3B71A3] focus:border-transparent outline-none transition-all"
-                  />
+                    class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-[#3B71A3] focus:border-transparent outline-none transition-all" />
 
-                  <button
-                    @click="sendComment"
-                    :disabled="(!newComment.trim() && selectedFiles.length === 0) || sending"
-                    class="bg-[#3B71A3] text-white p-2.5 rounded-xl hover:bg-[#2D567D] disabled:opacity-50 transition-all shadow-sm active:scale-95 flex items-center justify-center min-w-[44px]"
-                  >
-                    <svg
-                      v-if="!sending"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                  <button @click="sendComment" :disabled="(!newComment.trim() && selectedFiles.length === 0) || sending"
+                    class="bg-[#3B71A3] text-white p-2.5 rounded-xl hover:bg-[#2D567D] disabled:opacity-50 transition-all shadow-sm active:scale-95 flex items-center justify-center min-w-[44px]">
+                    <svg v-if="!sending" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                      stroke-linejoin="round">
                       <line x1="22" y1="2" x2="11" y2="13" />
                       <polygon points="22 2 15 22 11 13 2 9 22 2" />
                     </svg>
-                    <div
-                      v-else
-                      class="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full"
-                    ></div>
+                    <div v-else class="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full">
+                    </div>
                   </button>
                 </div>
               </div>
@@ -378,9 +238,7 @@
           </div>
 
           <div class="order-1 lg:order-2">
-            <div
-              class="bg-white rounded-2xl shadow-sm border border-gray-200 divide-y divide-gray-100"
-            >
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 divide-y divide-gray-100">
               <div class="p-6">
                 <h3 class="text-[11px] font-black uppercase text-gray-400 tracking-[0.2em] mb-6">
                   Informacje
@@ -389,15 +247,8 @@
                 <div class="space-y-6">
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-blue-50 text-[#3B71A3] rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
                         <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
                         <path d="M4 22h16" />
@@ -414,15 +265,8 @@
 
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <path d="m20 7-8-4-8 4m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     </div>
@@ -434,15 +278,8 @@
 
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10" />
                         <path d="M12 6v6l4 2" />
                       </svg>
@@ -455,15 +292,8 @@
 
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <path d="M20 21a8 8 0 0 0-16 0" />
                         <circle cx="12" cy="7" r="4" />
                       </svg>
@@ -476,15 +306,8 @@
 
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <rect x="2" y="4" width="20" height="16" rx="2" />
                         <path d="m22 7-10 7L2 7" />
                       </svg>
@@ -497,16 +320,10 @@
 
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path
+                          d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                       </svg>
                     </div>
                     <div>
@@ -517,15 +334,8 @@
 
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <path d="M3 21h18" />
                         <path d="M5 21V7l8-4 8 4v14" />
                         <path d="M9 9h.01" />
@@ -541,16 +351,10 @@
 
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path
+                          d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                       </svg>
                     </div>
                     <div>
@@ -561,15 +365,8 @@
 
                   <div class="flex items-start gap-4">
                     <div class="p-2.5 bg-amber-50 text-amber-600 rounded-xl">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10" />
                         <path d="M12 6v6l4 2" />
                       </svg>
@@ -579,10 +376,8 @@
                       <p class="font-bold text-gray-800">
                         {{ formatDate(ticket.dueAtUtc ?? ticket.DueAtUtc) }}
                       </p>
-                      <p
-                        :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)"
-                        class="text-xs font-semibold mt-1"
-                      >
+                      <p :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)"
+                        class="text-xs font-semibold mt-1">
                         {{
                           formatSlaRemaining(
                             ticket.remainingMinutes ?? ticket.RemainingMinutes,
@@ -590,11 +385,9 @@
                           )
                         }}
                       </p>
-                      <p
-                        v-if="shouldShowSlaMessage(ticket.slaMessage ?? ticket.SlaMessage)"
+                      <p v-if="shouldShowSlaMessage(ticket.slaMessage ?? ticket.SlaMessage)"
                         :class="getSlaTextClass(ticket.slaState ?? ticket.SlaState)"
-                        class="text-[11px] font-medium mt-1"
-                      >
+                        class="text-[11px] font-medium mt-1">
                         {{ ticket.slaMessage ?? ticket.SlaMessage }}
                       </p>
                     </div>
@@ -618,6 +411,7 @@
 </template>
 
 <script setup>
+import StatusBadge from '@/components/StatusBadge.vue'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
@@ -627,6 +421,9 @@ const route = useRoute()
 const router = useRouter()
 const ticket = ref(null)
 const loading = ref(true)
+
+// Stan dla dropdowna ze statusem
+const isStatusDropdownOpen = ref(false)
 
 const newComment = ref('')
 const selectedFiles = ref([])
@@ -666,7 +463,6 @@ const isTechnicianOnly = computed(() => {
 
   const isAdminOrHelpdesk = rolesArray.some((role) => role === 'Admin' || role === 'Helpdesk')
 
-  // Zwraca true, jeśli ma rolę Technik, ale NIE MA roli Admin lub Helpdesk
   return rolesArray.includes('Technik') && !isAdminOrHelpdesk
 })
 
@@ -703,6 +499,33 @@ const canChangeQueue = computed(() => {
 
   return false
 })
+
+// Pobranie nazwy obecnego statusu dla "wyzwalacza" z bazy dostępnych statusów
+const currentStatusName = computed(() => {
+  if (!availableStatuses.value.length || !selectedStatusId.value) return ticket.value?.status || 'Wybierz'
+  const found = availableStatuses.value.find(s => s.id === selectedStatusId.value)
+  return found ? found.name : (ticket.value?.status || 'Wybierz')
+})
+
+// Ujednolicenie kolorów z komponentem StatusBadge
+const getStatusBadgeClasses = (statusName) => {
+  if (!statusName) return 'bg-gray-100 text-gray-500 border-gray-200'
+  const normalized = statusName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+
+  if (['nowy', 'nowa'].includes(normalized)) return 'bg-green-100 text-green-700 border-green-200'
+  if (['w toku', 'w realizacji', 'w trakcie'].includes(normalized)) return 'bg-blue-100 text-blue-700 border-blue-200'
+  if (['rozwiazane', 'zamkniete', 'zamkniety', 'wykonane'].includes(normalized)) return 'bg-gray-100 text-gray-600 border-gray-200'
+
+  return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+}
+
+const handleStatusSelect = async (id) => {
+  if (isTechnicianOnly.value && id !== 3 && id !== 4) return;
+
+  selectedStatusId.value = id
+  isStatusDropdownOpen.value = false
+  await updateStatus()
+}
 
 const fetchTicketDetails = async () => {
   try {
@@ -820,8 +643,8 @@ const updatePriority = async () => {
 
 const updateCategory = async () => {
   try {
-    await axios.patch(`https://localhost:7054/api/ticket/${route.params.id}/category`, 
-      { newCategoryId: selectedCategoryId.value }, 
+    await axios.patch(`https://localhost:7054/api/ticket/${route.params.id}/category`,
+      { newCategoryId: selectedCategoryId.value },
       {
         withCredentials: true,
         headers: {
@@ -840,8 +663,8 @@ const updateCategory = async () => {
 
 const updateClient = async () => {
   try {
-    await axios.patch(`https://localhost:7054/api/ticket/${route.params.id}/client`, 
-      { newClientId: selectedClientId.value }, 
+    await axios.patch(`https://localhost:7054/api/ticket/${route.params.id}/client`,
+      { newClientId: selectedClientId.value },
       {
         withCredentials: true,
         headers: {
@@ -985,14 +808,6 @@ const shouldShowSlaMessage = (message) => {
   return message.trim() === 'Zgłoszenie rozwiązane po SLA'
 }
 
-const getStatusColor = (status) => {
-  if (status === 'Nowy') return 'bg-green-50 text-green-600 border-green-100'
-  if (status === 'W toku') return 'bg-blue-50 text-blue-600 border-blue-100'
-  if (status === 'Rozwiązane' || status === 'Zamknięte' || status === 'Wykonane')
-    return 'bg-gray-50 text-gray-600 border-gray-100'
-  return 'bg-yellow-50 text-yellow-600 border-yellow-100'
-}
-
 onMounted(async () => {
   await fetchTicketDetails()
 
@@ -1000,11 +815,11 @@ onMounted(async () => {
     await userStore.fetchCurrentUser()
   }
 
-  if (canChangeStatus.value) {
+  if (canChangeStatus.value !== undefined && canChangeStatus.value) {
     await Promise.all([fetchStatuses(), fetchPriorities(), fetchCategories(), fetchClients()])
   }
 
-  if (canChangeQueue.value) {
+  if (canChangeQueue.value !== undefined && canChangeQueue.value) {
     await fetchQueues()
   }
 })
