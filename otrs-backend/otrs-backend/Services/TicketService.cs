@@ -636,23 +636,12 @@ namespace otrs_backend.Services
         {
             var allowedTransitions = new Dictionary<int, List<int>>
             {
-                // 1: Nowy
-                { 1, new List<int> { 2, 4, 5 } },     // Nowy -> W toku, Wstrzymane, Oczekuje na odpowiedź klienta
-                
-                // 2: W toku
-                { 2, new List<int> { 1, 3, 4, 5 } },  // W toku -> Nowy, Rozwiązane, Wstrzymane, Oczekuje na odpowiedź klienta
-                
-                // 3: Rozwiązane
-                { 3, new List<int> { 6 } },           // Rozwiązane -> Wykonane (tylko do wykonania)
-                
-                // 4: Wstrzymane
-                { 4, new List<int> { 2 } },           // Wstrzymane -> W toku (wznowienie)
-                
-                // 5: Oczekuje na odpowiedź klienta
-                { 5, new List<int> { 2 } },           // Oczekuje na odpowiedź klienta -> W toku (po odpowiedzi)
-                
-                // 6: Wykonane
-                { 6, new List<int> { } }              // Wykonane -> brak przejść (koniec)
+                { 1, new List<int> { 2, 4, 5 } },
+                { 2, new List<int> { 1, 3, 4, 5, 6 } },
+                { 3, new List<int> { 2 } },
+                { 4, new List<int> { 2 } },
+                { 5, new List<int> { 2 } },
+                { 6, new List<int> { 2, 3 } }
             };
 
             return allowedTransitions.ContainsKey(oldStatusId) && 

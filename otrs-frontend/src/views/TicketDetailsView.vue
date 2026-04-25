@@ -51,7 +51,7 @@
                     @click="handleStatusSelect(statusOption.id)" :class="[
                       getStatusBadgeClasses(statusOption.name),
                       'cursor-pointer px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider border border-transparent text-center transition-all active:scale-95 hover:opacity-80',
-                      (isTechnicianOnly && statusOption.id !== 3 && statusOption.id !== 4) ? 'opacity-40 grayscale cursor-not-allowed pointer-events-none' : ''
+                      (isTechnicianOnly && statusOption.id !== 3 && statusOption.id !== 4 && statusOption.id !== 6) ? 'opacity-40 grayscale cursor-not-allowed pointer-events-none' : ''
                     ]">
                     {{ statusOption.name }}
                   </div>
@@ -196,7 +196,7 @@
                     class="bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 shadow-sm">
                     <span class="truncate max-w-[150px] font-medium text-[#3B71A3]">{{
                       file.name
-                    }}</span>
+                      }}</span>
                     <span class="text-gray-400">({{ (file.size / 1024).toFixed(1) }} KB)</span>
                     <button @click="removeFile(index)"
                       class="text-gray-400 hover:text-red-500 font-bold ml-1 transition-colors">
@@ -520,7 +520,7 @@ const getStatusBadgeClasses = (statusName) => {
 }
 
 const handleStatusSelect = async (id) => {
-  if (isTechnicianOnly.value && id !== 3 && id !== 4) return;
+  if (isTechnicianOnly.value && id !== 3 && id !== 4 && id !== 6) return;
 
   selectedStatusId.value = id
   isStatusDropdownOpen.value = false
