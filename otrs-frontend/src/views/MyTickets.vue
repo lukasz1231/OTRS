@@ -2,20 +2,19 @@
   <div class="min-h-screen bg-bialeTlo">
     <div class="max-w-6xl mx-auto px-6 py-12">
       <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        
+
         <div class="flex justify-between items-center mb-8">
           <div>
             <h1 class="text-3xl font-bold text-przyciskiNiebieski">Moje zgłoszenia</h1>
             <p class="text-gray-500 mt-1">Lista wszystkich Twoich zgłoszeń</p>
           </div>
-          
-          <button 
-            @click="goToCreateTicket"
-            class="flex items-center gap-2 bg-przyciskiNiebieski text-white px-5 py-2.5 rounded-lg hover:opacity-90 transition font-medium"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M5 12h14"/>
-              <path d="M12 5v14"/>
+
+          <button @click="goToCreateTicket"
+            class="flex items-center gap-2 bg-przyciskiNiebieski text-white px-5 py-2.5 rounded-lg hover:opacity-90 transition font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
             </svg>
             Nowe zgłoszenie
           </button>
@@ -23,50 +22,38 @@
 
         <div class="flex flex-col md:flex-row gap-4 mb-8">
           <div class="flex flex-wrap gap-4 mb-4">
-  <div class="flex bg-gray-100 p-1 rounded-xl">
-    <button 
-      v-for="filter in statusFilters" 
-      :key="filter"
-      @click="activeStatusFilter = filter"
-      :class="[
-        'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
-        activeStatusFilter === filter 
-          ? 'bg-white text-przyciskiNiebieski shadow-sm' 
-          : 'text-gray-500 hover:text-gray-700'
-      ]"
-    >
-      {{ filter }}
-    </button>
-  </div>
+            <div class="flex bg-gray-100 p-1 rounded-xl">
+              <button v-for="filter in statusFilters" :key="filter" @click="activeStatusFilter = filter" :class="[
+                'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
+                activeStatusFilter === filter
+                  ? 'bg-white text-przyciskiNiebieski shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              ]">
+                {{ filter }}
+              </button>
+            </div>
 
-  <div class="flex bg-gray-100 p-1 rounded-xl">
-    <button 
-      v-for="priority in priorityFilters" 
-      :key="priority"
-      @click="activePriorityFilter = priority"
-      :class="[
-        'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
-        activePriorityFilter === priority 
-          ? 'bg-white text-przyciskiNiebieski shadow-sm' 
-          : 'text-gray-500 hover:text-gray-700'
-      ]"
-    >
-      {{ priority }}
-    </button>
-  </div>
-</div>
+            <div class="flex bg-gray-100 p-1 rounded-xl">
+              <button v-for="priority in priorityFilters" :key="priority" @click="activePriorityFilter = priority"
+                :class="[
+                  'px-5 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer',
+                  activePriorityFilter === priority
+                    ? 'bg-white text-przyciskiNiebieski shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                ]">
+                {{ priority }}
+              </button>
+            </div>
+          </div>
 
           <div class="relative flex-grow">
-            <input 
-              v-model="searchQuery"
-              type="text" 
-              placeholder="Szukaj po ID lub tytule..." 
-              class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski"
-            />
+            <input v-model="searchQuery" type="text" placeholder="Szukaj po ID lub tytule..."
+              class="w-full pl-10 pr-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-przyciskiNiebieski" />
             <span class="absolute left-3 top-2.5 text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.3-4.3"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
               </svg>
             </span>
           </div>
@@ -77,16 +64,13 @@
         </div>
 
         <div v-else class="space-y-4">
-          <div 
-            v-for="ticket in filteredTickets" 
-            :key="ticket.id"
-            class="border border-gray-200 rounded-xl overflow-hidden hover:border-przyciskiNiebieski/50 transition-colors"
-          >
+          <div v-for="ticket in filteredTickets" :key="ticket.id"
+            class="border border-gray-200 rounded-xl overflow-hidden hover:border-przyciskiNiebieski/50 transition-colors">
             <div class="bg-przyciskiNiebieski text-white px-6 py-3 flex justify-between items-center">
               <span class="font-medium">{{ ticket.title }}</span>
-                <span class="text-xs font-mono opacity-80">ID: {{ ticket.publicId }}</span>
+              <span class="text-xs font-mono opacity-80">ID: {{ ticket.publicId }}</span>
             </div>
-            
+
             <div class="p-6 bg-white">
               <p class="text-gray-600 mb-4">{{ ticket.description }}</p>
               <div class="flex flex-wrap gap-4 text-sm">
@@ -96,10 +80,11 @@
                 <span :class="getPriorityClass(ticket.priority)" class="px-3 py-1 rounded-full">
                   {{ ticket.priority }}
                 </span>
-                <span :class="getStatusClass(getNormalizedStatus(ticket.status))" class="px-3 py-1 rounded-full">
-                  {{ getNormalizedStatus(ticket.status) }}
-                </span>
-                <span :class="getSlaBadgeClass(ticket.slaState ?? ticket.SlaState)" class="px-3 py-1 rounded-full font-medium">
+
+                <StatusBadge :status="ticket.status" />
+
+                <span :class="getSlaBadgeClass(ticket.slaState ?? ticket.SlaState)"
+                  class="px-3 py-1 rounded-full font-medium">
                   {{ getSlaLabel(ticket.slaState ?? ticket.SlaState) }}
                 </span>
                 <span class="text-gray-400">
@@ -109,22 +94,11 @@
             </div>
 
             <div class="bg-gray-50 px-6 py-3 flex justify-end border-t border-gray-100">
-              <button
-                @click="router.push({ name: 'ticket-details', params: { id: ticket.publicId } })"
-                class="flex items-center gap-2 px-5 py-2 bg-white text-[#3B71A3] border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#3B71A3] hover:text-white hover:border-[#3B71A3] transition-all active:scale-95 cursor-pointer shadow-sm"
-              >
+              <button @click="router.push({ name: 'ticket-details', params: { id: ticket.publicId } })"
+                class="flex items-center gap-2 px-5 py-2 bg-white text-[#3B71A3] border border-gray-200 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-[#3B71A3] hover:text-white hover:border-[#3B71A3] transition-all active:scale-95 cursor-pointer shadow-sm">
                 <span>Zobacz szczegóły</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M5 12h14m-7-7 7 7-7 7" />
                 </svg>
               </button>
@@ -137,6 +111,7 @@
 </template>
 
 <script setup>
+import StatusBadge from '@/components/StatusBadge.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
@@ -173,15 +148,27 @@ onMounted(() => {
 
 const filteredTickets = computed(() => {
   return tickets.value.filter(ticket => {
-    const normalizedStatus = getNormalizedStatus(ticket.status)
+    // Normalizacja przeniesiona z zewnątrz, służy teraz tylko do logicznego sprawdzania statusów na potrzeby filtrów
+    const rawStatus = (ticket.status || '').trim().toLowerCase()
+    let normalizedStatusForFilter = 'W toku'
+
+    if (rawStatus === 'nowy') {
+      normalizedStatusForFilter = 'Nowy'
+    } else if (rawStatus === 'rozwiązane' || rawStatus === 'rozwiazane') {
+      normalizedStatusForFilter = 'Rozwiązane'
+    }
 
     const userRoles = userStore.user?.roles || []
     const isResolver = userRoles.includes('Admin') || userRoles.includes('Helpdesk')
-    if (isResolver && normalizedStatus === 'Nowy') return false
 
-    if (activeStatusFilter.value === 'W toku' && normalizedStatus !== 'W toku') return false
-    if (activeStatusFilter.value === 'Zakończone' && normalizedStatus !== 'Rozwiązane') return false
-    
+    // Jeśli to resolver, to "Nowe" powinny zniknąć z jego tablicy "Moje zgłoszenia", bo nowe lądują w Oczekujących
+    if (isResolver && normalizedStatusForFilter === 'Nowy') return false
+
+    // Filtry zakładek
+    if (activeStatusFilter.value === 'W toku' && normalizedStatusForFilter !== 'W toku') return false
+    if (activeStatusFilter.value === 'Zakończone' && normalizedStatusForFilter !== 'Rozwiązane') return false
+
+    // Inne filtry
     if (activePriorityFilter.value !== 'Wszystkie' && ticket.priority !== activePriorityFilter.value) return false
 
     if (searchQuery.value) {
@@ -190,7 +177,7 @@ const filteredTickets = computed(() => {
       const publicId = (ticket.publicId || '').toLowerCase()
       return title.includes(query) || publicId.includes(query)
     }
-    
+
     return true
   })
 })
@@ -203,23 +190,6 @@ const getPriorityClass = (priority) => {
     'Krytyczny': 'bg-red-100 text-red-700'
   }
   return classes[priority] || 'bg-gray-100 text-gray-700'
-}
-
-const getNormalizedStatus = (status) => {
-  const normalized = (status || '').trim().toLowerCase()
-
-  if (normalized === 'nowy') return 'Nowy'
-  if (normalized === 'rozwiązane' || normalized === 'rozwiazane') return 'Rozwiązane'
-  return 'W toku'
-}
-
-const getStatusClass = (status) => {
-  const classes = {
-    'Nowy': 'bg-green-100 text-green-700',
-    'W toku': 'bg-blue-100 text-blue-700',
-    'Rozwiązane': 'bg-gray-100 text-gray-700',
-  }
-  return classes[status] || 'bg-gray-100 text-gray-700'
 }
 
 const parseUtcDate = (value) => {

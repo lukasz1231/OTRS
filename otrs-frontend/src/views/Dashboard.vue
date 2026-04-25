@@ -8,11 +8,8 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div
-          v-for="(stat, index) in stats"
-          :key="index"
-          class="flex flex-col border border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow"
-        >
+        <div v-for="(stat, index) in stats" :key="index"
+          class="flex flex-col border border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
           <div class="flex justify-between items-start mb-4">
             <h2 class="font-medium text-tekstSzaryCiemny">{{ stat.title }}</h2>
             <div v-html="stat.icon" :class="stat.iconColor"></div>
@@ -27,7 +24,8 @@
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div class="lg:col-span-2 border border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div
+          class="lg:col-span-2 border border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
           <h3 class="text-xl font-bold mb-1 text-tekstSzaryCiemny">Zgłoszenia w ostatnich 7 dniach</h3>
           <p class="text-tekstSzary mb-4 text-sm">Liczba zgłoszeń według daty utworzenia</p>
           <div class="relative" style="height: 220px;">
@@ -35,28 +33,31 @@
           </div>
         </div>
 
-        <div class="border border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col">
+        <div
+          class="border border-gray-300 rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <h3 class="text-xl font-bold mb-1 text-tekstSzaryCiemny">Szybkie akcje</h3>
           <p class="text-tekstSzary mb-6 text-sm">Najczęściej używane funkcje systemu</p>
 
           <div class="flex flex-col gap-3 mt-auto">
-            <button
-              @click="createTicket"
-              class="flex items-center gap-2 bg-przyciskiNiebieski text-white px-5 py-2.5 rounded-lg hover:opacity-90 transition font-medium justify-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-                <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+            <button @click="createTicket"
+              class="flex items-center gap-2 bg-przyciskiNiebieski text-white px-5 py-2.5 rounded-lg hover:opacity-90 transition font-medium justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+                <path d="M13 5v2" />
+                <path d="M13 17v2" />
+                <path d="M13 11v2" />
               </svg>
               Utwórz zgłoszenie
             </button>
 
-            <button
-              @click="viewTickets"
-              class="flex items-center gap-2 border border-gray-300 text-tekstSzaryCiemny px-5 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium justify-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            <button @click="viewTickets"
+              class="flex items-center gap-2 border border-gray-300 text-tekstSzaryCiemny px-5 py-2.5 rounded-lg hover:bg-gray-50 transition font-medium justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
               </svg>
               Przeglądaj zgłoszenia
             </button>
@@ -64,7 +65,8 @@
         </div>
       </div>
 
-      <div class="border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      <div
+        class="border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
         <div class="p-6 pb-3">
           <h3 class="text-xl font-bold mb-1 text-tekstSzaryCiemny">Ostatnie zgłoszenia</h3>
           <p class="text-tekstSzary text-sm">5 ostatnio dodanych zgłoszeń</p>
@@ -84,18 +86,14 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="ticket in recentTickets"
-              :key="ticket.id ?? ticket.Id"
+            <tr v-for="ticket in recentTickets" :key="ticket.id ?? ticket.Id"
               @click="goToTicket(ticket.publicId ?? ticket.PublicId)"
-              class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-            >
+              class="border-t border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
               <td class="px-6 py-3 text-tekstSzaryCiemny font-mono">{{ ticket.publicId ?? ticket.PublicId }}</td>
-              <td class="px-6 py-3 text-tekstSzaryCiemny max-w-xs truncate">{{ ticket.title ?? ticket.Title ?? '—' }}</td>
+              <td class="px-6 py-3 text-tekstSzaryCiemny max-w-xs truncate">{{ ticket.title ?? ticket.Title ?? '—' }}
+              </td>
               <td class="px-6 py-3">
-                <span :class="statusBadgeClass(ticket.status ?? ticket.Status)" class="px-2 py-0.5 rounded-full text-xs font-medium">
-                  {{ ticket.status ?? ticket.Status ?? '—' }}
-                </span>
+                <StatusBadge :status="ticket.status ?? ticket.Status" />
               </td>
               <td class="px-6 py-3 text-tekstSzary">{{ formatDate(ticket.createdAt ?? ticket.CreatedAt) }}</td>
             </tr>
@@ -108,6 +106,7 @@
 </template>
 
 <script setup>
+import StatusBadge from '@/components/StatusBadge.vue'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
@@ -146,6 +145,7 @@ const goToTicket = (id) => {
 
 const API_URL = 'https://localhost:7054/api/ticket'
 
+// Metoda zostaje do obliczania statystyk, usunięto natomiast metodę statusBadgeClass
 const normalizeLabel = (value) => {
   return (value || '')
     .normalize('NFD')
@@ -174,14 +174,6 @@ const formatDate = (val) => {
     month: '2-digit',
     year: 'numeric',
   })
-}
-
-const statusBadgeClass = (status) => {
-  const s = normalizeLabel(status)
-  if (s === 'nowy') return 'bg-blue-100 text-blue-700'
-  if (s === 'rozwiazane' || s === 'zamkniety' || s === 'zamknięty') return 'bg-green-100 text-green-700'
-  if (s === 'w realizacji' || s === 'w trakcie') return 'bg-teal-100 text-teal-700'
-  return 'bg-gray-100 text-gray-600'
 }
 
 const recentTickets = ref([])
