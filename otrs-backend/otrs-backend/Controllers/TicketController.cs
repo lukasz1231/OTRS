@@ -127,7 +127,7 @@ namespace otrs_backend.Controllers
 
             if (isTechnik && !isAdmin && !isHelpdesk)
             {
-                if (request.NewStatusId != 6 && request.NewStatusId != 3 && request.NewStatusId != 4)
+                if (request.NewStatusId != 6 && request.NewStatusId != 4)
                 {
                     return StatusCode(403, new { message = "Brak uprawnień." });
                 }
