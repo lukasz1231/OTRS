@@ -293,16 +293,6 @@ const submitTicket = async () => {
   }
 }
 
-// const resetForm = () => {
-//   form.title = ''
-//   form.description = ''
-//   form.client = ''
-//   form.typeId = ''
-//   form.priorityId = ''
-//   form.categoryId = ''
-//   form.queueId = ''
-// }
-
 const cancel = () => {
   router.back()
 }

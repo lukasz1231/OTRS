@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -121,7 +121,6 @@ namespace otrs_backend.Controllers
             await _context.SaveChangesAsync();
 
             var resetLink = $"http://localhost:5173/reset-password?token={token}";
-            Console.WriteLine($"Link do resetu hasła (mail na Mailtrap): {resetLink}");
 
             var mailMessage = new System.Net.Mail.MailMessage
             {
@@ -313,7 +312,6 @@ namespace otrs_backend.Controllers
                 new Claim(ClaimTypes.Name, $"{user.Name} {user.Surname}")
             };
 
-            // ZMIANA: Pętla dodająca każdą rolę użytkownika do Tokena
             foreach (var role in user.Roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role.Name));

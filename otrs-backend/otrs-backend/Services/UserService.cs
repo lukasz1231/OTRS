@@ -1,4 +1,3 @@
-﻿// Services/UserService.cs
 using Microsoft.EntityFrameworkCore;
 using otrs_backend.Data;
 using otrs_backend.Requests;
@@ -41,7 +40,6 @@ public class UserService
 
         if (user == null) return false;
 
-        // Mapowanie danych z requestu do modelu bazodanowego
         user.Name = request.Name;
         user.Surname = request.Surname;
         user.BirthDate = request.BirthDate;

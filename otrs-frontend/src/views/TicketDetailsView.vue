@@ -613,7 +613,6 @@ const updateStatus = async () => {
       },
     )
     await fetchTicketDetails()
-    console.log('Status zaktualizowany pomyślnie!')
   } catch (error) {
     console.error('Błąd podczas zmiany statusu:', error)
     alert('Nie udało się zmienić statusu.')
@@ -633,7 +632,6 @@ const updatePriority = async () => {
       },
     )
     await fetchTicketDetails()
-    console.log('Priorytet zaktualizowany pomyślnie!')
   } catch (error) {
     console.error('Błąd podczas zmiany priorytetu:', error)
     alert('Nie udało się zmienić priorytetu.')
@@ -652,7 +650,6 @@ const updateCategory = async () => {
         }
       }
     )
-    console.log('Kategoria zaktualizowana')
     await fetchTicketDetails()
   } catch (error) {
     console.error('Błąd podczas zmiany kategorii:', error)
@@ -672,7 +669,6 @@ const updateClient = async () => {
         }
       }
     )
-    console.log('Klient zaktualizowany')
     await fetchTicketDetails()
   } catch (error) {
     console.error('Błąd podczas zmiany klienta:', error)
@@ -694,7 +690,6 @@ const updateQueue = async () => {
       },
     )
     await fetchTicketDetails()
-    console.log('Kolejka zaktualizowana pomyślnie!')
   } catch (error) {
     console.error('Błąd podczas zmiany kolejki:', error)
     alert('Nie udało się zmienić kolejki.')

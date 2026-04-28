@@ -131,15 +131,6 @@ const handleSubmit = async () => {
       throw new Error(errorData || 'Wystąpił błąd podczas wysyłania linku.')
     }
 
-    try {
-      const data = await response.json()
-      if (data.devResetLink) {
-        console.log('Link do resetu hasła (Mailtrap):', data.devResetLink)
-      }
-    } catch (e) {
-      console.log(e)
-    }
-
     isSuccess.value = true
   } catch (error) {
     console.error(error)
