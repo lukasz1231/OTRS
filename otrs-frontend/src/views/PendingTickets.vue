@@ -48,12 +48,12 @@
           </div>
         </div>
 
-        <div v-if="filteredTickets.length === 0" class="text-center py-20 bg-gray-50 rounded-xl">
+        <div v-if="paginatedTickets.length === 0" class="text-center py-20 bg-gray-50 rounded-xl">
           <p class="text-gray-500">Brak oczekujących zgłoszeń</p>
         </div>
 
         <div v-else class="space-y-4">
-          <div v-for="ticket in filteredTickets" :key="ticket.id"
+          <div v-for="ticket in paginatedTickets" :key="ticket.id"
             class="border border-gray-200 rounded-xl overflow-hidden hover:border-przyciskiNiebieski/50 transition-colors">
             <div class="bg-przyciskiNiebieski text-white px-6 py-3 flex justify-between items-center">
               <span class="font-medium">{{ ticket.title }}</span>
@@ -93,6 +93,28 @@
               </button>
             </div>
           </div>
+
+          <div v-if="totalPages > 1" class="flex items-center justify-between pt-6 border-t border-gray-100 mt-8">
+            <p class="text-sm text-gray-500">
+              Strona <span class="font-medium">{{ currentPage }}</span> z <span class="font-medium">{{ totalPages }}</span>
+            </p>
+            <div class="flex gap-2">
+              <button 
+                @click="currentPage--" 
+                :disabled="currentPage === 1"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Poprzednia
+              </button>
+              <button 
+                @click="currentPage++" 
+                :disabled="currentPage === totalPages"
+                class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Następna
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -101,7 +123,7 @@
 
 <script setup>
 import StatusBadge from '@/components/StatusBadge.vue'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import axios from 'axios'
@@ -114,13 +136,21 @@ const activePriorityFilter = ref('Wszystkie')
 const searchQuery = ref('')
 const tickets = ref([])
 
+// PAGINACJA STAN
+const currentPage = ref(1)
+const itemsPerPage = 10
+
 const axiosConfig = { withCredentials: true }
+
+// Resetuj stronę do 1, gdy użytkownik zmienia filtry lub szuka
+watch([activePriorityFilter, searchQuery], () => {
+  currentPage.value = 1
+})
 
 const fetchPendingTickets = async () => {
   try {
     const response = await axios.get('/api/ticket', axiosConfig)
     if (Array.isArray(response.data)) {
-      // Poprawione filtrowanie po usunięciu funkcji getNormalizedStatus
       tickets.value = response.data.filter(t => {
         const normalizedStatus = (t.status || '').trim().toLowerCase()
         return normalizedStatus === 'nowy'
@@ -151,6 +181,17 @@ const filteredTickets = computed(() => {
 
     return true
   })
+})
+
+// LOGIKA PAGINACJI
+const totalPages = computed(() => {
+  return Math.ceil(filteredTickets.value.length / itemsPerPage)
+})
+
+const paginatedTickets = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredTickets.value.slice(start, end)
 })
 
 const getPriorityClass = (priority) => {
