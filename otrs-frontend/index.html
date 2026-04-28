@@ -1,13 +1,50 @@
 <!DOCTYPE html>
 <html lang="pl">
   <head>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="OTRS – System obsługi zgłoszeń. Zarządzaj zgłoszeniami serwisowymi szybko i wygodnie.">
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OTRS</title>
+    <style>
+      #universal-guard {
+        position: fixed; inset: 0; background: white; z-index: 999999;
+        display: flex; align-items: center; justify-content: center;
+        font-family: sans-serif; transition: opacity 0.4s ease;
+      }
+      .guard-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .loader {
+        border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+        border-radius: 50%; width: 45px; height: 45px;
+        animation: spin 1s linear infinite; margin-bottom: 20px;
+      }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      .retry-btn {
+        margin-top: 20px; padding: 12px 30px; background: #e74c3c;
+        color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;
+      }
+      .hidden { display: none !important; }
+    </style>
   </head>
   <body>
+    <div id="universal-guard">
+      <div id="guard-loading-state" class="guard-content">
+        <div class="loader"></div>
+        <div style="color: #555; font-weight: 500; font-size: 18px;">Inicjalizacja systemu...</div>
+      </div>
+
+      <div id="error-content" class="guard-content" style="display: none;">
+        <h1 style="color: #e74c3c; margin: 0;">⚠️ Brak połączenia</h1>
+        <p style="color: #666; margin-top: 10px;">Serwer OTRS przestał odpowiadać.<br>Sprawdź czy backend jest uruchomiony.</p>
+        <button class="retry-btn" onclick="window.location.reload()">ODŚWIEŻ STRONĘ</button>
+      </div>
+    </div>
+
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

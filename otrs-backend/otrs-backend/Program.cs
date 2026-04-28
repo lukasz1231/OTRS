@@ -9,6 +9,8 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- Serwisy ---
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -82,11 +84,8 @@ builder.Services.AddCors(options =>
         });
 });
 
-
-// Services
 builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<UserService>();
-
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -94,15 +93,33 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// --- Middleware Pipeline ---
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    // OBSŁUGA BŁĘDÓW DLA PRODUKCJI
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { message = "Błąd serwera. Spróbuj później." });
+        });
+    });
 }
 
 app.UseHttpsRedirection();
 
+// CORS musi być przed Auth!
 app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles();
