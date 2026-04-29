@@ -99,6 +99,8 @@ namespace otrs_backend.Services
             _context.Tickets.Add(ticket);
             await _context.SaveChangesAsync();
 
+            await NotifyUsersAboutTicketAsync(ticket, "Nowe zgłoszenie", $"Utworzono zgłoszenie: {ticket.Title}", creatorId);
+
             return ticket;
         }
 
@@ -517,9 +519,15 @@ namespace otrs_backend.Services
 
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
+
+            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            if (ticket != null)
+            {
+                await NotifyUsersAboutTicketAsync(ticket, "Nowy komentarz", $"Dodano nowy komentarz w zgłoszeniu: {ticket.Title}", userId);
+            }
         }
 
-        public async Task UpdateStatusAsync(int ticketId, int newStatusId) // POPRAWKA: przyjmujemy int Id
+        public async Task UpdateStatusAsync(int ticketId, int newStatusId, int currentUserId = 0) // POPRAWKA: przyjmujemy int Id
         {
             var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
             if (ticket == null)
@@ -567,6 +575,8 @@ namespace otrs_backend.Services
             }
 
             await _context.SaveChangesAsync();
+
+            await NotifyUsersAboutTicketAsync(ticket, "Zmiana statusu", $"Zmieniono status zgłoszenia: {ticket.Title} na '{newStatus.Name}'", currentUserId);
         }
 
         public async Task UpdatePriorityAsync(int ticketId, int newPriorityId)
@@ -646,6 +656,33 @@ namespace otrs_backend.Services
 
             return allowedTransitions.ContainsKey(oldStatusId) && 
                 allowedTransitions[oldStatusId].Contains(newStatusId);
+        }
+
+        private async Task NotifyUsersAboutTicketAsync(Ticket ticket, string title, string message, int currentUserId)
+        {
+            var usersToNotify = await _context.Users
+                .Include(u => u.Roles)
+                .Include(u => u.Ques)
+                .Include(u => u.AssignedTickets)
+                .Where(u => u.Id != currentUserId && (
+                    u.Roles.Any(r => r.Name == "Admin" || r.Name == "Helpdesk") ||
+                    (u.Roles.Any(r => r.Name == "Technik") && 
+                        (u.AssignedTickets.Any(t => t.Id == ticket.Id) || u.Ques.Any(q => q.Id == ticket.QueueId)))
+                ))
+                .ToListAsync();
+
+            var notifications = usersToNotify.Select(u => new Notification
+            {
+                UserId = u.Id,
+                Title = title,
+                Message = message,
+                TicketPublicId = ticket.PublicId,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            _context.Notifications.AddRange(notifications);
+            await _context.SaveChangesAsync();
         }
     }
 }

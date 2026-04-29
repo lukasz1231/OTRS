@@ -32,7 +32,12 @@ namespace otrs_backend.Controllers
             try
             {
                 var ticket = await _ticketService.CreateTicketAsync(request, currentUserId);
-                return CreatedAtAction(nameof(GetTicketById), new { id = ticket.PublicId }, ticket);
+                return CreatedAtAction(nameof(GetTicketById), new { id = ticket.PublicId }, new 
+                { 
+                    Id = ticket.Id, 
+                    PublicId = ticket.PublicId,
+                    Title = ticket.Title
+                });
             }
             catch (Exception ex)
             {

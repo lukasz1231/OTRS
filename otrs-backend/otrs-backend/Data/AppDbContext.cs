@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using otrs_backend.Models;
 using System.Net.Mail;
 
@@ -22,6 +22,7 @@ namespace otrs_backend.Data
         public DbSet<Models.Type> Types => Set<Models.Type>();
         public DbSet<otrs_backend.Models.Attachment> Attachments { get; set; }
         public DbSet<Client> Clients => Set<Client>();
+        public DbSet<Notification> Notifications => Set<Notification>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -107,6 +108,13 @@ namespace otrs_backend.Data
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            // Notification → User
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
             
             // User ↔ Que (Wiele-do-Wielu)
             // Ta konfiguracja pozwala jednemu użytkownikowi należeć do wielu kolejek jednocześnie

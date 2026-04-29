@@ -23,6 +23,7 @@ import MyTickets from '@/views/MyTickets.vue'
 import PendingTickets from '@/views/PendingTickets.vue'
 import AdminClients from '@/views/AdminClients.vue'
 import AdminTypes from '@/views/AdminTypes.vue'
+import NotificationsPage from '@/views/NotificationsPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -182,6 +183,12 @@ routes: [
       name: 'pendingTickets',
       component: PendingTickets,
       meta: { requiresAuth: true, title: 'Oczekujące zgłoszenia – OTRS' }
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: NotificationsPage,
+      meta: { requiresAuth: true, title: 'Powiadomienia – OTRS' }
     }
   ],
 })

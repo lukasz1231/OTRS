@@ -56,7 +56,6 @@
         ]"
       >
         <div class="flex flex-col gap-3 md:flex-row md:gap-2">
-  <!-- Standardowe menu items -->
   <button 
     v-for="item in menuItems" 
     :key="item.id"
@@ -73,7 +72,6 @@
     {{ item.label }}
   </button>
 
-  <!-- NOWY PRZYCISK: Utwórz zgłoszenie -->
   <button
     @click="goToCreateTicket"
     :class="[
@@ -93,6 +91,19 @@
 
         <div class="flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0">
           <div class="border-t border-gray-300 w-full md:hidden my-2"></div>
+
+          <div v-if="isAuthenticated" class="relative w-full md:w-auto flex justify-center md:block">
+            <button
+              @click="goToNotifications"
+              class="relative flex items-center justify-center p-2 text-gray-500 hover:text-przyciskiNiebieski transition-colors rounded-full hover:bg-gray-100 cursor-pointer focus:outline-none"
+              title="Powiadomienia"
+            >
+              <IconBell />
+              <span v-if="unreadCount > 0" class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full">
+                {{ unreadCount > 99 ? '99+' : unreadCount }}
+              </span>
+            </button>
+          </div>
 
           <button
             @click="goToProfile"
@@ -140,9 +151,10 @@
 </template>
 
 <script setup>
-import { ref, h, computed, watch } from 'vue'
+import { ref, h, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -262,6 +274,26 @@ const IconUser = () =>
     ],
   )
 
+const IconBell = () =>
+  h(
+    'svg',
+    {
+      xmlns: 'http://www.w3.org/2000/svg',
+      width: '20',
+      height: '20',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': '2',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    },
+    [
+      h('path', { d: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9' }),
+      h('path', { d: 'M13.73 21a2 2 0 0 1-3.46 0' }),
+    ]
+  )
+
 const isOpen = ref(false)
 const activeTab = ref('dashboard')
 
@@ -287,7 +319,6 @@ const menuItems = computed(() => {
   return items
 })
 
-// Śledzenie aktywnej zakładki
 watch(
   () => route.name,
   (newRouteName) => {
@@ -351,4 +382,44 @@ const goToCreateTicket = () => {
     router.push({ name: 'problemReportClient' })
   }
 }
+
+const notifications = ref([])
+const unreadCount = computed(() => notifications.value.filter(n => !n.isRead).length)
+
+const goToNotifications = () => {
+  isOpen.value = false
+  router.push({ name: 'notifications' })
+}
+
+const fetchNotifications = async () => {
+  if (!isAuthenticated.value) return
+  try {
+    const response = await axios.get('https://localhost:7054/api/notifications', { withCredentials: true })
+    notifications.value = response.data
+  } catch (error) {
+    console.error('Błąd pobierania powiadomień:', error)
+  }
+}
+
+let pollInterval = null
+onMounted(() => {
+  if (isAuthenticated.value) fetchNotifications()
+  pollInterval = setInterval(() => {
+    if (isAuthenticated.value) fetchNotifications()
+  }, 30000)
+})
+
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval)
+})
+
+watch(isAuthenticated, (newVal) => {
+  if (newVal) {
+    fetchNotifications()
+  } else {
+    notifications.value = []
+  }
+})
+
+
 </script>
