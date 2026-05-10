@@ -137,7 +137,6 @@ const fetchMyTickets = async () => {
     const response = await axios.get('/api/ticket', axiosConfig)
     tickets.value = Array.isArray(response.data) ? response.data : []
   } catch (error) {
-    console.error('Błąd podczas pobierania zgłoszeń:', error)
     tickets.value = []
   }
 }
@@ -148,7 +147,6 @@ onMounted(() => {
 
 const filteredTickets = computed(() => {
   return tickets.value.filter(ticket => {
-    // Normalizacja przeniesiona z zewnątrz, służy teraz tylko do logicznego sprawdzania statusów na potrzeby filtrów
     const rawStatus = (ticket.status || '').trim().toLowerCase()
     let normalizedStatusForFilter = 'W toku'
 
@@ -161,14 +159,11 @@ const filteredTickets = computed(() => {
     const userRoles = userStore.user?.roles || []
     const isResolver = userRoles.includes('Admin') || userRoles.includes('Helpdesk')
 
-    // Jeśli to resolver, to "Nowe" powinny zniknąć z jego tablicy "Moje zgłoszenia", bo nowe lądują w Oczekujących
     if (isResolver && normalizedStatusForFilter === 'Nowy') return false
 
-    // Filtry zakładek
     if (activeStatusFilter.value === 'W toku' && normalizedStatusForFilter !== 'W toku') return false
     if (activeStatusFilter.value === 'Zakończone' && normalizedStatusForFilter !== 'Rozwiązane') return false
 
-    // Inne filtry
     if (activePriorityFilter.value !== 'Wszystkie' && ticket.priority !== activePriorityFilter.value) return false
 
     if (searchQuery.value) {

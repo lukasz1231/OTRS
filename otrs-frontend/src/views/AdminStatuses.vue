@@ -122,14 +122,12 @@ const confirmModal = reactive({ show: false, message: '', action: null })
 const fetchStatuses = async () => {
   try {
     const res = await axios.get(API_URL, axiosConfig)
-    // MAPOWANIE: Gwarantujemy, że pola będą miały małe litery niezależnie od ustawień JSON na serwerze
     statuses.value = res.data.map(s => ({
       id: s.id || s.Id,
       name: s.name || s.Name,
       description: s.description || s.Description
     }))
   } catch (e) { 
-    console.error('Błąd fetch:', e)
     showNotification('Błąd połączenia z serwerem.', 'error')
   }
 }
@@ -153,7 +151,6 @@ const saveStatus = async () => {
       await axios.put(`${API_URL}/${currentStatus.value.id}`, currentStatus.value, axiosConfig)
       showNotification('Zaktualizowano status.', 'success')
     } else {
-      // TWORZYMY KOPIĘ BEZ POLA ID
       const payload = {
         name: currentStatus.value.name,
         description: currentStatus.value.description
@@ -164,8 +161,6 @@ const saveStatus = async () => {
     showModal.value = false
     await fetchStatuses()
   } catch (e) {
-    // PODGLĄD BŁĘDU W KONSOLI - pomoże nam jeśli to nie ID był problemem
-    console.error('Szczegóły błędu 400:', e.response?.data)
     showNotification('Błąd zapisu. Sprawdź dane.', 'error')
   }
 }

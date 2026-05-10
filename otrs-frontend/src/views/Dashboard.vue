@@ -145,7 +145,6 @@ const goToTicket = (id) => {
 
 const API_URL = 'https://localhost:7054/api/ticket'
 
-// Metoda zostaje do obliczania statystyk, usunięto natomiast metodę statusBadgeClass
 const normalizeLabel = (value) => {
   return (value || '')
     .normalize('NFD')
@@ -212,7 +211,6 @@ const stats = ref([
 const buildChart = (tickets) => {
   if (!chartCanvas.value) return
 
-  // Ostatnie 7 dni
   const days = []
   const counts = []
   for (let i = 6; i >= 0; i--) {
@@ -223,7 +221,7 @@ const buildChart = (tickets) => {
       day: '2-digit',
       month: '2-digit',
     })
-    const dateStr = d.toISOString().slice(0, 10) // YYYY-MM-DD
+    const dateStr = d.toISOString().slice(0, 10)
     const count = tickets.filter((t) => {
       const created = t.createdAt ?? t.CreatedAt
       if (!created) return false
@@ -329,7 +327,6 @@ const loadDashboardStats = async () => {
 
     buildChart(safeTickets)
   } catch (error) {
-    console.error('Błąd ładowania statystyk dashboardu:', error)
   }
 }
 

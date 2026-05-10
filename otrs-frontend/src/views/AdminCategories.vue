@@ -98,7 +98,7 @@ const CLIENTS_URL = 'https://localhost:7054/api/Admin/clients'
 const axiosConfig = { withCredentials: true }
 
 const categories = ref([])
-const clients = ref([]) // Lista klientów do dropdowna
+const clients = ref([])
 const showModal = ref(false)
 const isEditing = ref(false)
 const currentCategory = ref({ id: null, name: '', description: '', clientId: null })
@@ -111,20 +111,20 @@ const fetchInitialData = async () => {
       axios.get(CLIENTS_URL, axiosConfig)
     ])
     
-    // Mapowanie kategorii (dodajemy clientName do podglądu na liście)
     categories.value = resCats.data.map(c => ({ 
       id: c.id || c.Id, 
       name: c.name || c.Name, 
       description: c.description || c.Description,
       clientId: c.clientId || c.ClientId,
-      clientName: c.client?.name || c.Client?.Name // Jeśli Twoje API robi Include(t => t.Client)
+      clientName: c.client?.name || c.Client?.Name
     }))
 
     clients.value = resClients.data.map(cl => ({
       id: cl.id || cl.Id,
       name: cl.name || cl.Name
     }))
-  } catch (e) { console.error(e) }
+  } catch {
+  }
 }
 
 const openAddModal = () => { 
@@ -143,7 +143,6 @@ const saveCategory = async () => {
   if (!currentCategory.value.name) return
   
   try {
-    // Tworzymy czysty obiekt bez pola Id dla nowych kategorii
     const payload = {
       name: currentCategory.value.name,
       description: currentCategory.value.description,
@@ -151,13 +150,11 @@ const saveCategory = async () => {
     }
 
     if (isEditing.value) {
-      // Przy edycji dodajemy Id do URL i ewentualnie do body
       await axios.put(`${API_URL}/${currentCategory.value.id}`, { 
         ...payload, 
         id: currentCategory.value.id 
       }, axiosConfig)
     } else {
-      // Przy dodawaniu wysyłamy TYLKO payload bez Id
       await axios.post(API_URL, payload, axiosConfig)
     }
     
@@ -165,7 +162,6 @@ const saveCategory = async () => {
     await fetchInitialData()
     showNotification('Sukces!', 'success')
   } catch (e) {
-    console.error("Szczegóły błędu:", e.response?.data)
     showNotification('Błąd serwera. Sprawdź konsolę.', 'error')
   }
 }

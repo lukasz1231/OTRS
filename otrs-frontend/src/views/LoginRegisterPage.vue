@@ -471,7 +471,6 @@ const handleSubmit = async () => {
       data = await response.text()
     }
 
-    // 1. Ulepszona obsługa błędów (z main)
     if (!response.ok) {
       let errorMessage = 'Wystąpił błąd. Spróbuj ponownie.'
 
@@ -488,16 +487,13 @@ const handleSubmit = async () => {
       throw new Error(errorMessage)
     }
 
-    // 2. Bezpieczny zapis do Pinia (z HEAD)
     userStore.setUser(data.user)
 
-    // 3. Powiadomienia (z main)
     showNotification(
       activeTab.value === 'login' ? 'Zalogowano pomyślnie!' : 'Konto utworzone pomyślnie!',
       'success',
     )
 
-    // 4. Przekierowanie na podstawie ról, ale wyciąganych bezpiecznie z Pinii, a nie z tokena!
     const userRoles = data.user.roles || []
 
     if (userRoles.includes('Helpdesk') || userRoles.includes('Admin') || userRoles.includes('Technik')) {
@@ -508,7 +504,6 @@ const handleSubmit = async () => {
 
     router.push({ name: 'dashboard' })
   } catch (error) {
-    console.error('Błąd:', error)
     globalError.value = error.message
     showNotification(error.message, 'error')
   } finally {

@@ -188,7 +188,7 @@ const axiosConfig = { withCredentials: true }
 const form = reactive({
   title: '',
   description: '',
-  clientId: '', // Zmienione z 'client' na 'clientId' (int)
+  clientId: '',
   typeId: '',
   priorityId: '',
   categoryId: '',
@@ -199,14 +199,12 @@ const isSubmitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
-// REF-y NA DANE Z BAZY
 const clients = ref([])
 const types = ref([])
 const priorities = ref([])
 const allCategories = ref([])
 const queues = ref([])
 
-// POBIERANIE WSZYSTKIEGO Z BAZY PRZY STARCIE
 onMounted(async () => {
     const user = userStore.user
   const hasAccess = user?.roles?.some(role => 
@@ -223,34 +221,29 @@ onMounted(async () => {
       axios.get(`${API_BASE_URL}/priorities`, axiosConfig),
       axios.get(`${API_BASE_URL}/categories`, axiosConfig),
       axios.get(`${API_BASE_URL}/queues`, axiosConfig),
-      axios.get(`${API_BASE_URL}/clients`, axiosConfig), // Dodany endpoint dla klientów
+      axios.get(`${API_BASE_URL}/clients`, axiosConfig),
     ])
 
-    // Mapowanie danych (obsługa PascalCase i camelCase)
     types.value = resTypes.data.map((t) => ({ id: t.id || t.Id, name: t.name || t.Name }))
     priorities.value = resPrios.data.map((p) => ({ id: p.id || p.Id, name: p.name || p.Name }))
     queues.value = resQueues.data.map((q) => ({ id: q.id || q.Id, name: q.name || q.Name }))
     clients.value = resClients.data.map((cl) => ({ id: cl.id || cl.Id, name: cl.name || cl.Name }))
 
-    // Ważne: kategorie muszą mieć teraz clientId
     allCategories.value = resCats.data.map((c) => ({
       id: c.id || c.Id,
       name: c.name || c.Name,
       clientId: c.clientId || c.ClientId,
     }))
   } catch (error) {
-    console.error('Błąd ładowania danych słownikowych:', error)
     errorMessage.value = 'Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API.'
   }
 })
 
-// LOGIKA FILTROWANIA KATEGORII NA PODSTAWIE WYBRANEGO ID KLIENTA
 const filteredCategories = computed(() => {
   if (!form.clientId) return []
   return allCategories.value.filter((cat) => cat.clientId === form.clientId)
 })
 
-// RESET KATEGORII PRZY ZMIANIE KLIENTA
 const handleClientChange = () => {
   form.categoryId = ''
 }
@@ -285,7 +278,6 @@ const submitTicket = async () => {
       router.push(`/ticket/${ticketId}`)
     }, 2000) 
   } catch (error) {
-    console.error('Błąd podczas wysyłania:', error)
     errorMessage.value =
       error.response?.data?.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.'
   } finally {

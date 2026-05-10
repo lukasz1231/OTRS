@@ -255,7 +255,7 @@ const fetchQueues = async () => {
   try {
     const res = await axios.get(`${API_URL}/queues`, axiosConfig)
     queues.value = res.data
-  } catch (e) { console.error(e) }
+  } catch (e) { }
 }
 
 const createQueue = async () => {

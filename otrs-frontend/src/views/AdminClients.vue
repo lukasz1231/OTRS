@@ -300,7 +300,6 @@ const fetchClients = async () => {
       }))
     }))
   } catch (e) {
-    console.error(e)
     showNotification('Nie udało się pobrać listy klientów.', 'error')
   }
 }
@@ -315,7 +314,6 @@ const fetchUsers = async () => {
       email: u.email || u.Email
     }))
   } catch (e) {
-    console.error(e)
     showNotification('Nie udało się pobrać listy kont użytkowników.', 'error')
   }
 }
@@ -349,16 +347,14 @@ const openEditModal = (client) => {
 }
 
 const saveClient = async () => {
-  validationErrors.value = {} // Reset błędów
+  validationErrors.value = {}
   let hasFrontendErrors = false
 
-  // 1. Walidacja nazwy (Wymagana)
   if (!currentClient.value.name || currentClient.value.name.trim() === '') {
     validationErrors.value.Name = ['Nazwa klienta jest wymagana.']
     hasFrontendErrors = true
   }
 
-  // 2. Walidacja kodu pocztowego (jeśli wpisano)
   if (currentClient.value.postalCode) {
     const postalRegex = /^\d{2}-\d{3}$/
     if (!postalRegex.test(currentClient.value.postalCode)) {
@@ -367,22 +363,17 @@ const saveClient = async () => {
     }
   }
 
-  // 3. Walidacja numeru telefonu (jeśli wpisano)
   if (currentClient.value.phone) {
-    // Krok 1: Pozbywamy się spacji, myślników i nawiasów
     let cleanPhone = currentClient.value.phone.replace(/[\s\-()]/g, '');
     
-    // Krok 2: Odcinamy polski kierunkowy do liczenia cyfr
     if (cleanPhone.startsWith('+48')) {
       cleanPhone = cleanPhone.slice(3);
     } else if (cleanPhone.startsWith('0048')) {
       cleanPhone = cleanPhone.slice(4);
     } else if (cleanPhone.startsWith('+')) {
-      // Dla kierunkowych z innych krajów (zakładamy od 1 do 3 cyfr po plusie)
       cleanPhone = cleanPhone.replace(/^\+\d{1,3}/, '');
     }
 
-    // Krok 3: Sprawdzamy, czy to co zostało to same cyfry i czy jest ich co najmniej 9
     const digitsOnlyRegex = /^\d{9,15}$/;
 
     if (!digitsOnlyRegex.test(cleanPhone)) {
@@ -391,13 +382,11 @@ const saveClient = async () => {
     }
   }
 
-  // Przerwij, jeśli są błędy na frontendzie
   if (hasFrontendErrors) {
     showNotification('Popraw błędy w formularzu przed zapisaniem.', 'error')
     return
   }
 
-  // Wyślij do API, jeśli wszystko jest lokalnie poprawne
   try {
     const payload = {
       name: currentClient.value.name,
@@ -428,7 +417,6 @@ const saveClient = async () => {
     showModal.value = false
     await fetchClients()
   } catch (e) {
-    console.error(e)
     if (e.response && e.response.status === 400 && e.response.data.errors) {
       validationErrors.value = e.response.data.errors;
       showNotification('Serwer odrzucił dane - popraw błędy.', 'error')
@@ -447,7 +435,6 @@ const confirmDelete = (client) => {
       await fetchClients()
       showNotification('Klient został usunięty.', 'success')
     } catch (e) {
-      console.error(e)
       showNotification('Błąd: Ten klient jest prawdopodobnie powiązany z innymi danymi.', 'error')
       confirmModal.show = false
     }

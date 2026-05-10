@@ -133,7 +133,6 @@ const handleSubmit = async () => {
 
     isSuccess.value = true
   } catch (error) {
-    console.error(error)
     errorMessage.value = error.message
   } finally {
     isLoading.value = false

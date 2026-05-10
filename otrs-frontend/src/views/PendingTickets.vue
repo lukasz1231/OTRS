@@ -136,13 +136,11 @@ const activePriorityFilter = ref('Wszystkie')
 const searchQuery = ref('')
 const tickets = ref([])
 
-// PAGINACJA STAN
 const currentPage = ref(1)
 const itemsPerPage = 10
 
 const axiosConfig = { withCredentials: true }
 
-// Resetuj stronę do 1, gdy użytkownik zmienia filtry lub szuka
 watch([activePriorityFilter, searchQuery], () => {
   currentPage.value = 1
 })
@@ -158,8 +156,7 @@ const fetchPendingTickets = async () => {
     } else {
       tickets.value = []
     }
-  } catch (error) {
-    console.error('Błąd podczas pobierania oczekujących zgłoszeń:', error)
+  } catch {
     tickets.value = []
   }
 }
@@ -183,7 +180,6 @@ const filteredTickets = computed(() => {
   })
 })
 
-// LOGIKA PAGINACJI
 const totalPages = computed(() => {
   return Math.ceil(filteredTickets.value.length / itemsPerPage)
 })

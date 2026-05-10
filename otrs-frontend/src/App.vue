@@ -6,7 +6,6 @@ import Notification from './components/Notification.vue'
 import { ref, provide, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 
-// --- Notifications ---
 const notifications = ref([])
 let nextId = 1
 const showNotification = (message, type = 'success') => {
@@ -19,7 +18,6 @@ const removeNotification = (id) => {
 }
 provide('showNotification', showNotification)
 
-// --- HEARTBEAT & GUARD CONTROL ---
 const updateUIStatus = (isOffline) => {
   const guard = document.getElementById('universal-guard');
   const loadingState = document.getElementById('guard-loading-state');

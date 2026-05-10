@@ -174,7 +174,6 @@ onMounted(async () => {
     priorities.value = resPrios.data.map((p) => ({ id: p.id || p.Id, name: p.name || p.Name }))
     categories.value = resCats.data.map((c) => ({ id: c.id || c.Id, name: c.name || c.Name }))
   } catch (error) {
-    console.error('Błąd ładowania danych słownikowych:', error)
     errorMessage.value = 'Nie udało się pobrać opcji z serwera. Sprawdź połączenie z API.'
   }finally {
     isLoading.value = false

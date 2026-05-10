@@ -64,7 +64,6 @@ const fetchNotifications = async () => {
     const response = await axios.get('https://localhost:7054/api/notifications', { withCredentials: true })
     notifications.value = response.data
   } catch (error) {
-    console.error('Błąd pobierania powiadomień:', error)
   } finally {
     isLoading.value = false
   }
@@ -76,7 +75,6 @@ const handleNotificationClick = async (notification) => {
       await axios.patch(`https://localhost:7054/api/notifications/${notification.id}/read`, {}, { withCredentials: true })
       notification.isRead = true
     } catch (error) {
-      console.error('Błąd oznaczania powiadomienia jako przeczytane:', error)
     }
   }
   
@@ -90,7 +88,6 @@ const markAllAsRead = async () => {
     await axios.patch('https://localhost:7054/api/notifications/read-all', {}, { withCredentials: true })
     notifications.value.forEach(n => n.isRead = true)
   } catch (error) {
-    console.error('Błąd oznaczania powiadomień jako przeczytane:', error)
   }
 }
 

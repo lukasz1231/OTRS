@@ -34,7 +34,6 @@ export const useUserStore = defineStore('user', {
           this.clearUser();
         }
       } catch (error) {
-        console.error("Błąd podczas wznawiania sesji:", error);
         this.clearUser();
       } finally {
         this.isSessionChecked = true;

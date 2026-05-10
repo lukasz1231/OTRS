@@ -97,7 +97,8 @@ const fetchPriorities = async () => {
       level: p.level ?? p.Level,
       slaHours: p.slaHours ?? p.SlaHours ?? 24,
     }))
-  } catch (e) { console.error(e) }
+  } catch {
+  }
 }
 
 const openAddModal = () => { isEditing.value = false; currentPriority.value = { id: null, name: '', description: '', level: 1, slaHours: 24 }; showModal.value = true; }
@@ -107,18 +108,15 @@ const savePriority = async () => {
   if (!currentPriority.value.name || !currentPriority.value.slaHours || currentPriority.value.slaHours < 1) return
   try {
     if (isEditing.value) {
-      // Przy edycji (PUT) ID jest wymagane
       await axios.put(`${API_URL}/${currentPriority.value.id}`, currentPriority.value, axiosConfig)
     } else {
-      // Przy dodawaniu (POST) usuwamy ID, zostawiając name, description i level
       const { id, ...payload } = currentPriority.value
       await axios.post(API_URL, payload, axiosConfig)
     }
     showModal.value = false
     await fetchPriorities()
     showNotification(isEditing.value ? 'Zaktualizowano priorytet!' : 'Dodano priorytet!', 'success')
-  } catch (e) { 
-    console.error(e.response?.data)
+  } catch { 
     showNotification('Błąd zapisu priorytetu.', 'error') 
   }
 }

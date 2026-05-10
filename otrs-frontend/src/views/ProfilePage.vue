@@ -149,14 +149,12 @@ const searchQuery = ref('')
 const activeFilter = ref('Wszystkie')
 const tickets = ref([])
 
-// PAGINACJA
 const currentPage = ref(1)
 const itemsPerPage = 10
 
 const API_URL = 'https://localhost:7054/api/ticket'
 const axiosConfig = { withCredentials: true }
 
-// Reset strony przy zmianie filtrów
 watch([searchQuery, activeFilter], () => {
   currentPage.value = 1
 })
@@ -175,8 +173,7 @@ const fetchMyTickets = async () => {
   try {
     const response = await axios.get(API_URL, axiosConfig)
     tickets.value = response.data
-  } catch (error) {
-    console.error('Błąd podczas pobierania ticketów:', error)
+  } catch {
   }
 }
 
@@ -210,7 +207,6 @@ const filteredTickets = computed(() => {
   })
 })
 
-// LOGIKA PAGINACJI
 const totalPages = computed(() => Math.ceil(filteredTickets.value.length / itemsPerPage))
 
 const paginatedTickets = computed(() => {

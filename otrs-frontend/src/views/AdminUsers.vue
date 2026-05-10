@@ -205,11 +205,9 @@ const users = ref([])
 const allRoles = ref([])
 const searchQuery = ref('')
 
-// Modal Edycji
 const isModalOpen = ref(false)
 const editForm = ref({ id: null, name: '', surname: '', email: '', roles: [], newPassword: '' })
 
-// Modal Usuwania
 const isDeleteModalOpen = ref(false)
 const userToDelete = ref(null)
 
@@ -221,7 +219,6 @@ const fetchUsers = async () => {
     const response = await axios.get(`${API_URL}/users?search=${searchQuery.value}`, axiosConfig)
     users.value = response.data
   } catch (err) {
-    console.error('Błąd pobierania użytkowników', err)
     showNotification('Nie udało się pobrać listy użytkowników.', 'error')
   }
 }
@@ -230,8 +227,7 @@ const fetchRoles = async () => {
   try {
     const response = await axios.get(`${API_URL}/roles`, axiosConfig)
     allRoles.value = response.data
-  } catch (err) {
-    console.error('Błąd pobierania ról', err)
+  } catch {
   }
 }
 
@@ -251,7 +247,6 @@ const saveChanges = async () => {
   }
 }
 
-// Logika usuwania
 const confirmDelete = (user) => {
   userToDelete.value = user
   isDeleteModalOpen.value = true

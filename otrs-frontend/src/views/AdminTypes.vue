@@ -142,7 +142,6 @@ const isEditModalOpen = ref(false);
 const editId = ref(null);
 const form = ref({ name: '', description: '' });
 
-// Stan modala usuwania
 const deleteModal = reactive({
   show: false,
   id: null,
@@ -153,8 +152,7 @@ const fetchTypes = async () => {
   try {
     const res = await axios.get('https://localhost:7054/api/Admin/types-all', axiosConfig);
     types.value = res.data;
-  } catch (e) {
-    console.error('Błąd pobierania typów:', e);
+  } catch {
   }
 };
 
@@ -190,7 +188,6 @@ const saveType = async () => {
   }
 };
 
-// Logika potwierdzenia usunięcia
 const confirmDelete = (type) => {
   deleteModal.id = type.id;
   deleteModal.typeName = type.name;

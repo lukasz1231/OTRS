@@ -362,7 +362,6 @@ const handleLogout = async () => {
       credentials: 'include',
     })
   } catch (error) {
-    console.error('Błąd podczas wylogowywania:', error)
   } finally {
     userStore.clearUser()
     isOpen.value = false
@@ -397,7 +396,6 @@ const fetchNotifications = async () => {
     const response = await axios.get('https://localhost:7054/api/notifications', { withCredentials: true })
     notifications.value = response.data
   } catch (error) {
-    console.error('Błąd pobierania powiadomień:', error)
   }
 }
 

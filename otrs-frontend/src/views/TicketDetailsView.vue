@@ -540,7 +540,6 @@ const fetchTicketDetails = async () => {
     selectedQueueId.value = response.data.queueId
     selectedClientId.value = response.data.clientId
   } catch (error) {
-    console.error('Error fetching ticket details:', error)
   } finally {
     loading.value = false
   }
@@ -553,7 +552,6 @@ const fetchStatuses = async () => {
     })
     availableStatuses.value = response.data
   } catch (error) {
-    console.error('Błąd podczas pobierania statusów:', error)
   }
 }
 
@@ -564,7 +562,6 @@ const fetchPriorities = async () => {
     })
     availablePriorities.value = response.data
   } catch (error) {
-    console.error('Błąd podczas pobierania priorytetów:', error)
   }
 }
 
@@ -575,7 +572,6 @@ const fetchCategories = async () => {
     })
     availableCategories.value = response.data
   } catch (error) {
-    console.error('Błąd podczas pobierania kategorii:', error)
   }
 }
 
@@ -586,7 +582,6 @@ const fetchClients = async () => {
     })
     availableClients.value = response.data
   } catch (error) {
-    console.error('Błąd podczas pobierania klientów:', error)
   }
 }
 
@@ -597,7 +592,6 @@ const fetchQueues = async () => {
     })
     availableQueues.value = response.data
   } catch (error) {
-    console.error('Błąd podczas pobierania kolejek:', error)
   }
 }
 
@@ -614,7 +608,6 @@ const updateStatus = async () => {
     )
     await fetchTicketDetails()
   } catch (error) {
-    console.error('Błąd podczas zmiany statusu:', error)
     alert('Nie udało się zmienić statusu.')
     await fetchTicketDetails()
   }
@@ -633,7 +626,6 @@ const updatePriority = async () => {
     )
     await fetchTicketDetails()
   } catch (error) {
-    console.error('Błąd podczas zmiany priorytetu:', error)
     alert('Nie udało się zmienić priorytetu.')
     await fetchTicketDetails()
   }
@@ -652,7 +644,6 @@ const updateCategory = async () => {
     )
     await fetchTicketDetails()
   } catch (error) {
-    console.error('Błąd podczas zmiany kategorii:', error)
     alert('Błąd uruchamiania backendu zmiany kategorii.')
     await fetchTicketDetails()
   }
@@ -671,7 +662,6 @@ const updateClient = async () => {
     )
     await fetchTicketDetails()
   } catch (error) {
-    console.error('Błąd podczas zmiany klienta:', error)
     alert('Błąd podczas aktualizacji klienta')
     await fetchTicketDetails()
   }
@@ -691,7 +681,6 @@ const updateQueue = async () => {
     )
     await fetchTicketDetails()
   } catch (error) {
-    console.error('Błąd podczas zmiany kolejki:', error)
     alert('Nie udało się zmienić kolejki.')
     await fetchTicketDetails()
   }
@@ -738,7 +727,6 @@ const sendComment = async () => {
     if (fileInput.value) fileInput.value.value = ''
     await fetchTicketDetails()
   } catch (error) {
-    console.error('Error adding comment:', error)
     alert('Nie udało się dodać komentarza. Sprawdź konsolę.')
   } finally {
     sending.value = false
