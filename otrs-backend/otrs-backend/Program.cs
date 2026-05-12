@@ -9,8 +9,6 @@ DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Serwisy ---
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -93,8 +91,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// --- Middleware Pipeline ---
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -103,7 +99,6 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // OBSŁUGA BŁĘDÓW DLA PRODUKCJI
     app.UseExceptionHandler(errorApp =>
     {
         errorApp.Run(async context =>
@@ -117,7 +112,6 @@ else
 
 app.UseHttpsRedirection();
 
-// CORS musi być przed Auth!
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();

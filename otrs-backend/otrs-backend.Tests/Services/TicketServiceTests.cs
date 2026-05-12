@@ -32,156 +32,134 @@ namespace otrs_backend.Tests.Services
                 _service = new TicketService(_context);
             }
 
-        // ✅ TEST 1: Dozwolona zmiana Nowy -> W toku
         [Fact]
         public async Task UpdateStatusAsync_NowyNaWToku_Dozwolone_StatusZmieniony()
         {
-            // Arrange
             var ticket = new Ticket
             {
                 Id = 1,
                 PublicId = "PL2026042100001",
                 Title = "Test",
                 Description = "Opis testowy",
-                StatusId = 1, // Nowy
+                StatusId = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = 1
             };
             _context.Tickets.Add(ticket);
             await _context.SaveChangesAsync();
 
-            // Act
-            await _service.UpdateStatusAsync(ticket.Id, 2); // Zmiana na W toku
+            await _service.UpdateStatusAsync(ticket.Id, 2);
 
-            // Assert
             var updatedTicket = await _context.Tickets.FindAsync(ticket.Id);
             Assert.Equal(2, updatedTicket.StatusId);
         }
 
-        // ✅ TEST 2: Dozwolona zmiana W toku -> Rozwiązane
         [Fact]
         public async Task UpdateStatusAsync_WTokuNaRozwiazane_Dozwolone_StatusZmieniony()
         {
-            // Arrange
             var ticket = new Ticket
             {
                 Id = 2,
                 PublicId = "PL2026042100002",
                 Title = "Test",
                 Description = "Opis testowy",
-                StatusId = 2, // W toku
+                StatusId = 2,
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = 1
             };
             _context.Tickets.Add(ticket);
             await _context.SaveChangesAsync();
 
-            // Act
-            await _service.UpdateStatusAsync(ticket.Id, 3); // Zmiana na Rozwiązane
+            await _service.UpdateStatusAsync(ticket.Id, 3);
 
-            // Assert
             var updatedTicket = await _context.Tickets.FindAsync(ticket.Id);
             Assert.Equal(3, updatedTicket.StatusId);
         }
 
-        // ✅ TEST 3: Dozwolona zmiana Rozwiązane -> Wykonane
         [Fact]
         public async Task UpdateStatusAsync_RozwiazaneNaWykonane_Dozwolone_StatusZmieniony()
         {
-            // Arrange
             var ticket = new Ticket
             {
                 Id = 3,
                 PublicId = "PL2026042100003",
                 Title = "Test",
                 Description = "Opis testowy",
-                StatusId = 3, // Rozwiązane
+                StatusId = 3,
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = 1
             };
             _context.Tickets.Add(ticket);
             await _context.SaveChangesAsync();
 
-            // Act
-            await _service.UpdateStatusAsync(ticket.Id, 6); // Zmiana na Wykonane
+            await _service.UpdateStatusAsync(ticket.Id, 6);
 
-            // Assert
             var updatedTicket = await _context.Tickets.FindAsync(ticket.Id);
             Assert.Equal(6, updatedTicket.StatusId);
         }
 
-        // ❌ TEST 4: Niedozwolona zmiana Nowy -> Wykonane (pomijając pośrednie statusy)
         [Fact]
         public async Task UpdateStatusAsync_NowyNaWykonane_Niedozwolone_Wyjatek()
         {
-            // Arrange
             var ticket = new Ticket
             {
                 Id = 4,
                 PublicId = "PL2026042100004",
                 Title = "Test",
                 Description = "Opis testowy",
-                StatusId = 1, // Nowy
+                StatusId = 1,
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = 1
             };
             _context.Tickets.Add(ticket);
             await _context.SaveChangesAsync();
 
-            // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => 
-                _service.UpdateStatusAsync(ticket.Id, 6)); // Próba zmiany na Wykonane
+                _service.UpdateStatusAsync(ticket.Id, 6));
 
             Assert.Contains("nie jest dozwolone", exception.Message);
         }
 
-        // ❌ TEST 5: Niedozwolona zmiana Wykonane -> Nowy (cofnięcie zakończonego)
         [Fact]
         public async Task UpdateStatusAsync_WykonaneNaNowy_Niedozwolone_Wyjatek()
         {
-            // Arrange
             var ticket = new Ticket
             {
                 Id = 5,
                 PublicId = "PL2026042100005",
                 Title = "Test",
                 Description = "Opis testowy",
-                StatusId = 6, // Wykonane
+                StatusId = 6,
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = 1
             };
             _context.Tickets.Add(ticket);
             await _context.SaveChangesAsync();
 
-            // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => 
-                _service.UpdateStatusAsync(ticket.Id, 1)); // Próba zmiany na Nowy
+                _service.UpdateStatusAsync(ticket.Id, 1));
 
             Assert.Contains("nie jest dozwolone", exception.Message);
         }
 
-        // ✅ TEST 6: Sprawdzenie naliczania czasu pauzy
         [Fact]
         public async Task UpdateStatusAsync_PrzejscieWPauze_ZapisujeCzasPauzy()
         {
-            // Arrange
             var ticket = new Ticket
             {
                 Id = 6,
                 PublicId = "PL2026042100006",
                 Title = "Test",
                 Description = "Opis testowy",
-                StatusId = 2, // W toku
+                StatusId = 2,
                 CreatedAt = DateTime.UtcNow.AddHours(-2),
                 CreatorId = 1
             };
             _context.Tickets.Add(ticket);
             await _context.SaveChangesAsync();
 
-            // Act - zmiana na status pauzy (Wstrzymane)
             await _service.UpdateStatusAsync(ticket.Id, 4);
 
-            // Assert
             var updatedTicket = await _context.Tickets.FindAsync(ticket.Id);
             Assert.Equal(4, updatedTicket.StatusId);
             Assert.NotNull(updatedTicket.PausedAtUtc);

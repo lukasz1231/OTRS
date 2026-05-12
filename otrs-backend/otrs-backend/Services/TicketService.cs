@@ -527,7 +527,7 @@ namespace otrs_backend.Services
             }
         }
 
-        public async Task UpdateStatusAsync(int ticketId, int newStatusId, int currentUserId = 0) // POPRAWKA: przyjmujemy int Id
+        public async Task UpdateStatusAsync(int ticketId, int newStatusId, int currentUserId = 0)
         {
             var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
             if (ticket == null)

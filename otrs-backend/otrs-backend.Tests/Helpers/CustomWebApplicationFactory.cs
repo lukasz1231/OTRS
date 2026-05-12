@@ -11,23 +11,17 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // ✔ ENV TU
         builder.UseEnvironment("Testing");
 
         builder.ConfigureServices(services =>
         {
-            // ❌ usuń wszystkie DbContexty
             services.RemoveAll(typeof(DbContextOptions<AppDbContext>));
 
-            // ✔ tylko INMEMORY
             services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseInMemoryDatabase("TestDb");
             });
 
-            // ❌ NIE ROBIMY BuildServiceProvider()
-
-            // ✔ AUTH
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = TestAuthHandler.Scheme;
