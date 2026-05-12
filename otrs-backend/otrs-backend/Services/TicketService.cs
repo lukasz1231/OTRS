@@ -34,7 +34,7 @@ namespace otrs_backend.Services
         public string? ReporterClientName { get; set; }
         public string? ReporterClientPhone { get; set; }
         public DateTime CreatedAt { get; set; }
-        public string Client { get; set; } = default!; // Zwracamy nazwę klienta jako string do frontu
+        public string Client { get; set; } = default!;
         public int? ClientId { get; set; }
         public string Status { get; set; } = default!;
         public int StatusId { get; set; }
@@ -71,6 +71,7 @@ namespace otrs_backend.Services
         public async Task<Ticket> CreateTicketAsync(CreateTicketRequest request, int creatorId)
         {
             var initialStatus = await _context.Statuses
+                .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Name == "Nowy")
                 ?? throw new Exception("Błąd konfiguracji systemu: Brak statusu 'Nowy' w bazie danych.");
 
@@ -78,7 +79,7 @@ namespace otrs_backend.Services
 
             var queueId = request.QueueId > 0
                 ? request.QueueId.Value
-                : (await _context.Ques.FirstOrDefaultAsync())?.Id
+                : (await _context.Ques.AsNoTracking().FirstOrDefaultAsync())?.Id
                   ?? throw new Exception("Brak dostępnych kolejek w systemie.");
 
             var ticket = new Ticket
@@ -110,6 +111,7 @@ namespace otrs_backend.Services
             var prefix = "PL";
 
             var lastTicket = await _context.Tickets
+                .AsNoTracking()
                 .Where(t => t.PublicId != null && t.PublicId.StartsWith(prefix + today))
                 .OrderByDescending(t => t.PublicId)
                 .FirstOrDefaultAsync();
@@ -134,15 +136,11 @@ namespace otrs_backend.Services
             var userRoles = await GetUserRolesAsync(currentUserId);
             var canViewContactData = userRoles.Contains("Admin") || userRoles.Contains("Helpdesk") || userRoles.Contains("Technik");
 
-            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
+            // OPTYMALIZACJA: AsNoTracking() + Projekcja Select eliminuje N+1 bez potrzeby używania Include
+            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles)
+                .AsNoTracking();
 
             var tickets = await visibleTicketsQuery
-                .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
-                .Include(t => t.Status)
-                .Include(t => t.Priority)
-                .Include(t => t.Category)
-                .Include(t => t.Type)
-                .Include(t => t.Queue)
                 .Select(t => new TicketDto
                 {
                     Id = t.Id,
@@ -155,7 +153,7 @@ namespace otrs_backend.Services
                     ReporterClientName = t.Creator.Client != null ? t.Creator.Client.Name : null,
                     ReporterClientPhone = canViewContactData && t.Creator.Client != null ? t.Creator.Client.Phone : null,
                     CreatedAt = t.CreatedAt,
-                    Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
+                    Client = t.Client != null ? t.Client.Name : "Brak klienta",
                     ClientId = t.ClientId,
                     Status = t.Status.Name,
                     StatusId = t.StatusId,
@@ -190,19 +188,10 @@ namespace otrs_backend.Services
             var userRoles = await GetUserRolesAsync(currentUserId);
             var canViewContactData = userRoles.Contains("Admin") || userRoles.Contains("Helpdesk") || userRoles.Contains("Technik");
 
-            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
+            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles)
+                .AsNoTracking();
 
             var ticket = await visibleTicketsQuery
-                .Include(t => t.Client) // WAŻNE: dociągamy dane klienta
-                .Include(t => t.Comments)
-                    .ThenInclude(c => c.User)
-                .Include(t => t.Comments)
-                    .ThenInclude(c => c.Attachments)
-                .Include(t => t.Status)
-                .Include(t => t.Priority)
-                .Include(t => t.Category)
-                .Include(t => t.Type)
-                .Include(t => t.Queue)
                 .Where(t => t.Id == ticketId)
                 .Select(t => new TicketDto
                 {
@@ -216,7 +205,7 @@ namespace otrs_backend.Services
                     ReporterClientName = t.Creator.Client != null ? t.Creator.Client.Name : null,
                     ReporterClientPhone = canViewContactData && t.Creator.Client != null ? t.Creator.Client.Phone : null,
                     CreatedAt = t.CreatedAt,
-                    Client = t.Client != null ? t.Client.Name : "Brak klienta", // Pobieramy nazwę z relacji
+                    Client = t.Client != null ? t.Client.Name : "Brak klienta",
                     ClientId = t.ClientId,
                     Status = t.Status.Name,
                     StatusId = t.StatusId,
@@ -267,19 +256,10 @@ namespace otrs_backend.Services
             var userRoles = await GetUserRolesAsync(currentUserId);
             var canViewContactData = userRoles.Contains("Admin") || userRoles.Contains("Helpdesk") || userRoles.Contains("Technik");
 
-            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles);
+            var visibleTicketsQuery = ApplyTicketVisibilityRules(_context.Tickets, currentUserId, userRoles)
+                .AsNoTracking();
 
             var ticket = await visibleTicketsQuery
-                .Include(t => t.Client)
-                .Include(t => t.Comments)
-                    .ThenInclude(c => c.User)
-                .Include(t => t.Comments)
-                    .ThenInclude(c => c.Attachments)
-                .Include(t => t.Status)
-                .Include(t => t.Priority)
-                .Include(t => t.Category)
-                .Include(t => t.Type)
-                .Include(t => t.Queue)
                 .Where(t => t.PublicId == publicId)
                 .Select(t => new TicketDto
                 {
@@ -342,6 +322,7 @@ namespace otrs_backend.Services
         public async Task<int?> GetTicketIdByPublicIdAsync(string publicId)
         {
             var ticket = await _context.Tickets
+                .AsNoTracking()
                 .Where(t => t.PublicId == publicId)
                 .Select(t => new { t.Id })
                 .FirstOrDefaultAsync();
@@ -448,6 +429,7 @@ namespace otrs_backend.Services
         private async Task<HashSet<string>> GetUserRolesAsync(int userId)
         {
             var roles = await _context.Users
+                .AsNoTracking()
                 .Where(u => u.Id == userId)
                 .SelectMany(u => u.Roles.Select(r => r.Name))
                 .ToListAsync();
@@ -460,13 +442,11 @@ namespace otrs_backend.Services
             int currentUserId,
             HashSet<string> userRoles)
         {
-            // Admin i Helpdesk widzą wszystkie zgłoszenia
             if (userRoles.Contains("Admin") || userRoles.Contains("Helpdesk"))
             {
                 return query;
             }
 
-            // Technik widzi zgłoszenia przypisane do niego lub znajdujące się w jego kolejkach
             if (userRoles.Contains("Technik"))
             {
                 return query.Where(t =>
@@ -474,7 +454,6 @@ namespace otrs_backend.Services
                     t.Queue.Users.Any(u => u.Id == currentUserId));
             }
 
-            // Zwykły użytkownik widzi własne zgłoszenia oraz te przypisane do niego.
             return query.Where(t =>
                 t.CreatorId == currentUserId ||
                 t.AssignedUsers.Any(u => u.Id == currentUserId));
@@ -520,7 +499,7 @@ namespace otrs_backend.Services
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
-            var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.Id == ticketId);
+            var ticket = await _context.Tickets.AsNoTracking().FirstOrDefaultAsync(t => t.Id == ticketId);
             if (ticket != null)
             {
                 await NotifyUsersAboutTicketAsync(ticket, "Nowy komentarz", $"Dodano nowy komentarz w zgłoszeniu: {ticket.Title}", userId);
@@ -535,12 +514,12 @@ namespace otrs_backend.Services
                 throw new Exception($"Nie znaleziono zgłoszenia o ID: {ticketId}");
             }
 
-            var newStatus = await _context.Statuses.FirstOrDefaultAsync(s => s.Id == newStatusId);
+            var newStatus = await _context.Statuses.AsNoTracking().FirstOrDefaultAsync(s => s.Id == newStatusId);
             if (newStatus == null)
             {
                 throw new Exception($"Status o ID '{newStatusId}' nie istnieje.");
             }
-            
+
             if (!IsStatusTransitionAllowed(ticket.StatusId, newStatusId))
             {
                 throw new Exception($"Przejście z statusu o ID '{ticket.StatusId}' do statusu o ID '{newStatusId}' nie jest dozwolone.");
@@ -623,7 +602,7 @@ namespace otrs_backend.Services
 
         public async Task<IEnumerable<Status>> GetAllStatusesAsync()
         {
-            return await _context.Statuses.ToListAsync();
+            return await _context.Statuses.AsNoTracking().ToListAsync();
         }
 
         public async Task UpdateClientAsync(int ticketId, int? newClientId)
@@ -642,6 +621,7 @@ namespace otrs_backend.Services
             ticket.ClientId = newClientId;
             await _context.SaveChangesAsync();
         }
+
         private bool IsStatusTransitionAllowed(int oldStatusId, int newStatusId)
         {
             var allowedTransitions = new Dictionary<int, List<int>>
@@ -654,19 +634,20 @@ namespace otrs_backend.Services
                 { 6, new List<int> { 2, 3 } }
             };
 
-            return allowedTransitions.ContainsKey(oldStatusId) && 
+            return allowedTransitions.ContainsKey(oldStatusId) &&
                 allowedTransitions[oldStatusId].Contains(newStatusId);
         }
 
         private async Task NotifyUsersAboutTicketAsync(Ticket ticket, string title, string message, int currentUserId)
         {
             var usersToNotify = await _context.Users
+                .AsNoTracking()
                 .Include(u => u.Roles)
                 .Include(u => u.Ques)
                 .Include(u => u.AssignedTickets)
                 .Where(u => u.Id != currentUserId && (
                     u.Roles.Any(r => r.Name == "Admin" || r.Name == "Helpdesk") ||
-                    (u.Roles.Any(r => r.Name == "Technik") && 
+                    (u.Roles.Any(r => r.Name == "Technik") &&
                         (u.AssignedTickets.Any(t => t.Id == ticket.Id) || u.Ques.Any(q => q.Id == ticket.QueueId)))
                 ))
                 .ToListAsync();
