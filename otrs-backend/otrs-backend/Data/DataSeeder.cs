@@ -19,13 +19,19 @@ namespace otrs_backend.Data
                 context.Roles.AddRange(roles);
                 context.SaveChanges();
             }
+        }
 
+        public static void SeedStatuses(AppDbContext context)
+        {
             if (!context.Statuses.Any(s => s.Name == "Wykonane"))
             {
                 context.Statuses.Add(new Status { Name = "Wykonane", Description = "Zadanie zrealizowane przez technika" });
                 context.SaveChanges();
             }
+        }
 
+        public static void SeedUsers(AppDbContext context)
+        {
             if (!context.Users.Any())
             {
                 var adminRole = context.Roles.FirstOrDefault(r => r.Name == "Admin");
@@ -70,6 +76,49 @@ namespace otrs_backend.Data
 
                 context.Users.AddRange(adminUser, technikUser, standardUser);
                 context.SaveChanges();
+            }
+        }
+
+        public static void SeedTickets(AppDbContext context)
+        {
+            if (!context.Tickets.Any())
+            {
+                // Ensure required dictionary data exists before creating a ticket
+                var category = context.Categories.FirstOrDefault() ?? new Category { Name = "Sprzęt", Description = "Awarie sprzętowe" };
+                var priority = context.Priorities.FirstOrDefault() ?? new Priority { Name = "Wysoki", Description = "Wysoki priorytet", Level = 1 };
+                var type = context.Types.FirstOrDefault() ?? new Models.Type { Name = "Incydent", Description = "Zgłoszenie awarii" };
+                var queue = context.Ques.FirstOrDefault() ?? new Que { Name = "IT Support" };
+                var status = context.Statuses.FirstOrDefault(s => s.Name == "Nowe") ?? new Status { Name = "Nowe", Description = "Nowe zgłoszenie" };
+
+                if (category.Id == 0) context.Categories.Add(category);
+                if (priority.Id == 0) context.Priorities.Add(priority);
+                if (type.Id == 0) context.Types.Add(type);
+                if (queue.Id == 0) context.Ques.Add(queue);
+                if (status.Id == 0) context.Statuses.Add(status);
+                
+                context.SaveChanges();
+
+                var clientUser = context.Users.FirstOrDefault(u => u.Email == "user@wp.pl");
+                
+                if (clientUser != null)
+                {
+                    var ticket = new Ticket
+                    {
+                        PublicId = "PL" + DateTime.Now.ToString("yyyyMMdd") + "00001",
+                        Title = "Testowe zgłoszenie - Awaria komputera",
+                        Description = "Mój komputer nie chce się włączyć. Proszę o pilną pomoc.",
+                        CreatedAt = DateTime.UtcNow,
+                        CreatorId = clientUser.Id,
+                        CategoryId = category.Id,
+                        PriorityId = priority.Id,
+                        TypeId = type.Id,
+                        QueueId = queue.Id,
+                        StatusId = status.Id
+                    };
+                    
+                    context.Tickets.Add(ticket);
+                    context.SaveChanges();
+                }
             }
         }
     }
