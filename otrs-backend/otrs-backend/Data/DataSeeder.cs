@@ -107,7 +107,7 @@ namespace otrs_backend.Data
                 var priority = context.Priorities.FirstOrDefault() ?? new Priority { Name = "Wysoki", Description = "Wysoki priorytet", Level = 1 };
                 var type = context.Types.FirstOrDefault() ?? new Models.Type { Name = "Incydent", Description = "Zgłoszenie awarii" };
                 var queue = context.Ques.FirstOrDefault() ?? new Que { Name = "IT Support" };
-                var status = context.Statuses.FirstOrDefault(s => s.Name == "Nowe") ?? new Status { Name = "Nowe", Description = "Nowe zgłoszenie" };
+                var status = context.Statuses.FirstOrDefault(s => s.Name == "Nowy") ?? new Status { Name = "Nowy", Description = "Nowe zgłoszenie" };
 
                 if (category.Id == 0) context.Categories.Add(category);
                 if (priority.Id == 0) context.Priorities.Add(priority);

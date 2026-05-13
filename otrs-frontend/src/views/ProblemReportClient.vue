@@ -207,7 +207,7 @@ const submitTicket = async () => {
       router.push(`/ticket/${pId}`)
     }, 4000)
   } catch (error) {
-    errorMessage.value = error.message
+    errorMessage.value = error.response?.data?.message || error.message
   } finally {
     isSubmitting.value = false
   }
