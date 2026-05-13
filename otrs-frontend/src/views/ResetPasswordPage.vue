@@ -262,7 +262,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api';
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
@@ -324,7 +324,7 @@ const handleSubmit = async () => {
 
   try {
     if (isTokenMode.value) {
-      await axios.post(
+      await api.post(
         '/api/Auth/reset-password',
         {
           newPassword: formData.password,
@@ -333,7 +333,7 @@ const handleSubmit = async () => {
         axiosConfig,
       )
     } else if (isAuthenticatedMode.value) {
-      await axios.post(
+      await api.post(
         '/api/Auth/change-password',
         {
           currentPassword: formData.currentPassword,

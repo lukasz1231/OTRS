@@ -4,7 +4,7 @@ import Navbar from './components/Navbar.vue'
 import Footer from './components/Footer.vue'
 import Notification from './components/Notification.vue'
 import { ref, provide, onMounted, onUnmounted } from 'vue'
-import axios from 'axios'
+import api from '@/services/api';
 
 const notifications = ref([])
 let nextId = 1
@@ -38,7 +38,7 @@ const updateUIStatus = (isOffline) => {
 
 const checkConnection = async () => {
   try {
-    await axios.get('https://localhost:7054/api/Auth/me', { timeout: 2000 });
+    await api.get('/api/Auth/me', { timeout: 2000 });
     updateUIStatus(false);
   } catch (error) {
     if (!error.response || error.response.status >= 500) {

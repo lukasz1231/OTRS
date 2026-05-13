@@ -140,7 +140,7 @@ import StatusBadge from '@/components/StatusBadge.vue'
 import { ref, h, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import axios from 'axios'
+import api from '@/services/api';
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -152,7 +152,7 @@ const tickets = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 10
 
-const API_URL = 'https://localhost:7054/api/ticket'
+const API_URL = '/api/ticket'
 const axiosConfig = { withCredentials: true }
 
 watch([searchQuery, activeFilter], () => {
@@ -171,7 +171,7 @@ const user = computed(() => {
 
 const fetchMyTickets = async () => {
   try {
-    const response = await axios.get(API_URL, axiosConfig)
+    const response = await api.get(API_URL, axiosConfig)
     tickets.value = response.data
   } catch {
   }

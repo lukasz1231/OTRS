@@ -107,10 +107,10 @@
 
 <script setup>
 import { ref, onMounted, inject, reactive } from 'vue'
-import axios from 'axios'
+import api from '@/services/api';
 
 const showNotification = inject('showNotification')
-const API_URL = 'https://localhost:7054/api/Admin/statuses'
+const API_URL = '/api/Admin/statuses'
 const axiosConfig = { withCredentials: true }
 
 const statuses = ref([])
@@ -121,7 +121,7 @@ const confirmModal = reactive({ show: false, message: '', action: null })
 
 const fetchStatuses = async () => {
   try {
-    const res = await axios.get(API_URL, axiosConfig)
+    const res = await api.get(API_URL, axiosConfig)
     statuses.value = res.data.map(s => ({
       id: s.id || s.Id,
       name: s.name || s.Name,
@@ -148,14 +148,14 @@ const saveStatus = async () => {
   if (!currentStatus.value.name) return
   try {
     if (isEditing.value) {
-      await axios.put(`${API_URL}/${currentStatus.value.id}`, currentStatus.value, axiosConfig)
+      await api.put(`${API_URL}/${currentStatus.value.id}`, currentStatus.value, axiosConfig)
       showNotification('Zaktualizowano status.', 'success')
     } else {
       const payload = {
         name: currentStatus.value.name,
         description: currentStatus.value.description
       }
-      await axios.post(API_URL, payload, axiosConfig)
+      await api.post(API_URL, payload, axiosConfig)
       showNotification('Dodano nowy status.', 'success')
     }
     showModal.value = false
@@ -173,7 +173,7 @@ const confirmDeleteStatus = (status) => {
 
 const executeDeleteStatus = async (id) => {
   try {
-    await axios.delete(`${API_URL}/${id}`, axiosConfig)
+    await api.delete(`${API_URL}/${id}`, axiosConfig)
     confirmModal.show = false
     await fetchStatuses()
     showNotification('Status usunięty.', 'success')

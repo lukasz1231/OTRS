@@ -131,10 +131,10 @@
 
 <script setup>
 import { ref, onMounted, inject, reactive } from 'vue';
-import axios from 'axios';
+import api from '@/services/api';
 
 const showNotification = inject('showNotification');
-const API_URL = 'https://localhost:7054/api/Admin/types';
+const API_URL = '/api/Admin/types';
 const axiosConfig = { withCredentials: true };
 
 const types = ref([]);
@@ -150,7 +150,7 @@ const deleteModal = reactive({
 
 const fetchTypes = async () => {
   try {
-    const res = await axios.get('https://localhost:7054/api/Admin/types-all', axiosConfig);
+    const res = await api.get('/api/Admin/types-all', axiosConfig);
     types.value = res.data;
   } catch {
   }
@@ -175,10 +175,10 @@ const saveType = async () => {
 
   try {
     if (editId.value) {
-      await axios.put(`${API_URL}/${editId.value}`, form.value, axiosConfig);
+      await api.put(`${API_URL}/${editId.value}`, form.value, axiosConfig);
       showNotification('Typ został zaktualizowany', 'success');
     } else {
-      await axios.post(API_URL, form.value, axiosConfig);
+      await api.post(API_URL, form.value, axiosConfig);
       showNotification('Nowy typ został utworzony', 'success');
     }
     isEditModalOpen.value = false;
@@ -196,7 +196,7 @@ const confirmDelete = (type) => {
 
 const executeDelete = async () => {
   try {
-    await axios.delete(`${API_URL}/${deleteModal.id}`, axiosConfig);
+    await api.delete(`${API_URL}/${deleteModal.id}`, axiosConfig);
     showNotification('Typ został usunięty', 'success');
     deleteModal.show = false;
     fetchTypes();

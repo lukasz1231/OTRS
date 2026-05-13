@@ -130,11 +130,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import axios from 'axios'
+import api from '@/services/api';
 
 const router = useRouter()
 const userStore = useUserStore()
-const API_BASE_URL = 'https://localhost:7054/api/Admin'
+const API_BASE_URL = '/api/Admin'
 const axiosConfig = { withCredentials: true }
 
 const form = reactive({
@@ -165,9 +165,9 @@ onMounted(async () => {
   }
   try {
     const [resTypes, resPrios, resCats] = await Promise.all([
-      axios.get(`${API_BASE_URL}/types`, axiosConfig),
-      axios.get(`${API_BASE_URL}/priorities`, axiosConfig),
-      axios.get(`${API_BASE_URL}/categories`, axiosConfig),
+      api.get(`${API_BASE_URL}/types`, axiosConfig),
+      api.get(`${API_BASE_URL}/priorities`, axiosConfig),
+      api.get(`${API_BASE_URL}/categories`, axiosConfig),
     ])
 
     types.value = resTypes.data.map((t) => ({ id: t.id || t.Id, name: t.name || t.Name }))

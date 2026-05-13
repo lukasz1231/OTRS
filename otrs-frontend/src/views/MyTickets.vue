@@ -115,7 +115,7 @@ import StatusBadge from '@/components/StatusBadge.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import axios from 'axios'
+import api from '@/services/api';
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -134,7 +134,7 @@ const axiosConfig = { withCredentials: true }
 
 const fetchMyTickets = async () => {
   try {
-    const response = await axios.get('/api/ticket', axiosConfig)
+    const response = await api.get('/api/ticket', axiosConfig)
     tickets.value = Array.isArray(response.data) ? response.data : []
   } catch (error) {
     tickets.value = []

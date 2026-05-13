@@ -75,10 +75,10 @@
 
 <script setup>
 import { ref, onMounted, inject, reactive } from 'vue'
-import axios from 'axios'
+import api from '@/services/api';
 
 const showNotification = inject('showNotification')
-const API_URL = 'https://localhost:7054/api/Admin/priorities'
+const API_URL = '/api/Admin/priorities'
 const axiosConfig = { withCredentials: true }
 
 const priorities = ref([])
@@ -89,7 +89,7 @@ const confirmModal = reactive({ show: false, message: '', action: null })
 
 const fetchPriorities = async () => {
   try {
-    const res = await axios.get(API_URL, axiosConfig)
+    const res = await api.get(API_URL, axiosConfig)
     priorities.value = res.data.map(p => ({
       id: p.id ?? p.Id,
       name: p.name ?? p.Name,
@@ -108,10 +108,10 @@ const savePriority = async () => {
   if (!currentPriority.value.name || !currentPriority.value.slaHours || currentPriority.value.slaHours < 1) return
   try {
     if (isEditing.value) {
-      await axios.put(`${API_URL}/${currentPriority.value.id}`, currentPriority.value, axiosConfig)
+      await api.put(`${API_URL}/${currentPriority.value.id}`, currentPriority.value, axiosConfig)
     } else {
       const { id, ...payload } = currentPriority.value
-      await axios.post(API_URL, payload, axiosConfig)
+      await api.post(API_URL, payload, axiosConfig)
     }
     showModal.value = false
     await fetchPriorities()
@@ -125,7 +125,7 @@ const confirmDelete = (prio) => {
   confirmModal.message = `Czy usunąć priorytet "${prio.name}"?`
   confirmModal.action = async () => {
     try {
-      await axios.delete(`${API_URL}/${prio.id}`, axiosConfig)
+      await api.delete(`${API_URL}/${prio.id}`, axiosConfig)
       confirmModal.show = false
       await fetchPriorities()
       showNotification('Usunięto.', 'success')

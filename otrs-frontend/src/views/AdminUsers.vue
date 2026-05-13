@@ -197,7 +197,7 @@
 
 <script setup>
 import { ref, onMounted, inject } from 'vue'
-import axios from 'axios'
+import api from '@/services/api';
 
 const showNotification = inject('showNotification')
 
@@ -211,12 +211,12 @@ const editForm = ref({ id: null, name: '', surname: '', email: '', roles: [], ne
 const isDeleteModalOpen = ref(false)
 const userToDelete = ref(null)
 
-const API_URL = 'https://localhost:7054/api/Admin'
+const API_URL = '/api/Admin'
 const axiosConfig = { withCredentials: true }
 
 const fetchUsers = async () => {
   try {
-    const response = await axios.get(`${API_URL}/users?search=${searchQuery.value}`, axiosConfig)
+    const response = await api.get(`${API_URL}/users?search=${searchQuery.value}`, axiosConfig)
     users.value = response.data
   } catch (err) {
     showNotification('Nie udało się pobrać listy użytkowników.', 'error')
@@ -225,7 +225,7 @@ const fetchUsers = async () => {
 
 const fetchRoles = async () => {
   try {
-    const response = await axios.get(`${API_URL}/roles`, axiosConfig)
+    const response = await api.get(`${API_URL}/roles`, axiosConfig)
     allRoles.value = response.data
   } catch {
   }
@@ -238,7 +238,7 @@ const openEditModal = (user) => {
 
 const saveChanges = async () => {
   try {
-    await axios.put(`${API_URL}/users/${editForm.value.id}`, editForm.value, axiosConfig)
+    await api.put(`${API_URL}/users/${editForm.value.id}`, editForm.value, axiosConfig)
     isModalOpen.value = false
     await fetchUsers()
     showNotification('Dane użytkownika zostały zaktualizowane!', 'success')
@@ -255,7 +255,7 @@ const confirmDelete = (user) => {
 const deleteUser = async () => {
   if (!userToDelete.value) return
   try {
-    await axios.delete(`${API_URL}/users/${userToDelete.value.id}`, axiosConfig)
+    await api.delete(`${API_URL}/users/${userToDelete.value.id}`, axiosConfig)
     isDeleteModalOpen.value = false
     userToDelete.value = null
     await fetchUsers()

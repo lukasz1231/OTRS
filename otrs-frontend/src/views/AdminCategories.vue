@@ -90,11 +90,11 @@
 
 <script setup>
 import { ref, onMounted, inject, reactive } from 'vue'
-import axios from 'axios'
+import api from '@/services/api';
 
 const showNotification = inject('showNotification')
-const API_URL = 'https://localhost:7054/api/Admin/categories'
-const CLIENTS_URL = 'https://localhost:7054/api/Admin/clients'
+const API_URL = '/api/Admin/categories'
+const CLIENTS_URL = '/api/Admin/clients'
 const axiosConfig = { withCredentials: true }
 
 const categories = ref([])
@@ -107,8 +107,8 @@ const confirmModal = reactive({ show: false, message: '', action: null })
 const fetchInitialData = async () => {
   try {
     const [resCats, resClients] = await Promise.all([
-      axios.get(API_URL, axiosConfig),
-      axios.get(CLIENTS_URL, axiosConfig)
+      api.get(API_URL, axiosConfig),
+      api.get(CLIENTS_URL, axiosConfig)
     ])
     
     categories.value = resCats.data.map(c => ({ 
@@ -150,12 +150,12 @@ const saveCategory = async () => {
     }
 
     if (isEditing.value) {
-      await axios.put(`${API_URL}/${currentCategory.value.id}`, { 
+      await api.put(`${API_URL}/${currentCategory.value.id}`, { 
         ...payload, 
         id: currentCategory.value.id 
       }, axiosConfig)
     } else {
-      await axios.post(API_URL, payload, axiosConfig)
+      await api.post(API_URL, payload, axiosConfig)
     }
     
     showModal.value = false
@@ -170,7 +170,7 @@ const confirmDelete = (cat) => {
   confirmModal.message = `Czy usunąć kategorię "${cat.name}"?`
   confirmModal.action = async () => {
     try {
-      await axios.delete(`${API_URL}/${cat.id}`, axiosConfig)
+      await api.delete(`${API_URL}/${cat.id}`, axiosConfig)
       confirmModal.show = false
       await fetchInitialData()
       showNotification('Usunięto.', 'success')

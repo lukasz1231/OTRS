@@ -51,7 +51,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api';
 
 const router = useRouter()
 const notifications = ref([])
@@ -61,7 +61,7 @@ const unreadCount = computed(() => notifications.value.filter(n => !n.isRead).le
 
 const fetchNotifications = async () => {
   try {
-    const response = await axios.get('https://localhost:7054/api/notifications', { withCredentials: true })
+    const response = await api.get('/api/notifications', { withCredentials: true })
     notifications.value = response.data
   } catch (error) {
   } finally {
@@ -72,7 +72,7 @@ const fetchNotifications = async () => {
 const handleNotificationClick = async (notification) => {
   if (!notification.isRead) {
     try {
-      await axios.patch(`https://localhost:7054/api/notifications/${notification.id}/read`, {}, { withCredentials: true })
+      await api.patch(`/api/notifications/${notification.id}/read`, {}, { withCredentials: true })
       notification.isRead = true
     } catch (error) {
     }
@@ -85,7 +85,7 @@ const handleNotificationClick = async (notification) => {
 
 const markAllAsRead = async () => {
   try {
-    await axios.patch('https://localhost:7054/api/notifications/read-all', {}, { withCredentials: true })
+    await api.patch('/api/notifications/read-all', {}, { withCredentials: true })
     notifications.value.forEach(n => n.isRead = true)
   } catch (error) {
   }

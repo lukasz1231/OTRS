@@ -143,7 +143,7 @@ const goToTicket = (id) => {
   router.push({ name: 'ticket-details', params: { id } })
 }
 
-const API_URL = 'https://localhost:7054/api/ticket'
+const API_URL = '/api/ticket'
 
 const normalizeLabel = (value) => {
   return (value || '')

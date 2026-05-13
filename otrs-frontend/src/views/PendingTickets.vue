@@ -126,7 +126,7 @@ import StatusBadge from '@/components/StatusBadge.vue'
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import axios from 'axios'
+import api from '@/services/api';
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -147,7 +147,7 @@ watch([activePriorityFilter, searchQuery], () => {
 
 const fetchPendingTickets = async () => {
   try {
-    const response = await axios.get('/api/ticket', axiosConfig)
+    const response = await api.get('/api/ticket', axiosConfig)
     if (Array.isArray(response.data)) {
       tickets.value = response.data.filter(t => {
         const normalizedStatus = (t.status || '').trim().toLowerCase()

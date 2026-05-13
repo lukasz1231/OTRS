@@ -180,7 +180,7 @@
                           <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
                           <polyline points="13 2 13 9 20 9" />
                         </svg>
-                        <a :href="`https://localhost:7054${file.filePath}`" target="_blank"
+                        <a :href="`${file.filePath}`" target="_blank"
                           class="text-[#3B71A3] font-bold hover:underline truncate max-w-[200px]">
                           {{ file.fileName }}
                         </a>
@@ -414,7 +414,7 @@
 import StatusBadge from '@/components/StatusBadge.vue'
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api';
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
@@ -529,7 +529,7 @@ const handleStatusSelect = async (id) => {
 
 const fetchTicketDetails = async () => {
   try {
-    const response = await axios.get(`https://localhost:7054/api/ticket/${route.params.id}`, {
+    const response = await api.get(`/api/ticket/${route.params.id}`, {
       withCredentials: true,
     })
     ticket.value = response.data
@@ -547,7 +547,7 @@ const fetchTicketDetails = async () => {
 
 const fetchStatuses = async () => {
   try {
-    const response = await axios.get('https://localhost:7054/api/ticket/statuses', {
+    const response = await api.get('/api/ticket/statuses', {
       withCredentials: true,
     })
     availableStatuses.value = response.data
@@ -557,7 +557,7 @@ const fetchStatuses = async () => {
 
 const fetchPriorities = async () => {
   try {
-    const response = await axios.get('https://localhost:7054/api/admin/priorities', {
+    const response = await api.get('/api/admin/priorities', {
       withCredentials: true,
     })
     availablePriorities.value = response.data
@@ -567,7 +567,7 @@ const fetchPriorities = async () => {
 
 const fetchCategories = async () => {
   try {
-    const response = await axios.get('https://localhost:7054/api/admin/categories-all', {
+    const response = await api.get('/api/admin/categories-all', {
       withCredentials: true,
     })
     availableCategories.value = response.data
@@ -577,7 +577,7 @@ const fetchCategories = async () => {
 
 const fetchClients = async () => {
   try {
-    const response = await axios.get('https://localhost:7054/api/admin/clients', {
+    const response = await api.get('/api/admin/clients', {
       withCredentials: true,
     })
     availableClients.value = response.data
@@ -587,7 +587,7 @@ const fetchClients = async () => {
 
 const fetchQueues = async () => {
   try {
-    const response = await axios.get('https://localhost:7054/api/admin/queues', {
+    const response = await api.get('/api/admin/queues', {
       withCredentials: true,
     })
     availableQueues.value = response.data
@@ -598,8 +598,8 @@ const fetchQueues = async () => {
 const updateStatus = async () => {
   if (selectedStatusId.value == null) return
   try {
-    await axios.patch(
-      `https://localhost:7054/api/ticket/${route.params.id}/status`,
+    await api.patch(
+      `/api/ticket/${route.params.id}/status`,
       { newStatusId: selectedStatusId.value },
       {
         withCredentials: true,
@@ -616,8 +616,8 @@ const updateStatus = async () => {
 const updatePriority = async () => {
   if (selectedPriorityId.value == null) return
   try {
-    await axios.patch(
-      `https://localhost:7054/api/ticket/${route.params.id}/priority`,
+    await api.patch(
+      `/api/ticket/${route.params.id}/priority`,
       { newPriorityId: selectedPriorityId.value },
       {
         withCredentials: true,
@@ -633,7 +633,7 @@ const updatePriority = async () => {
 
 const updateCategory = async () => {
   try {
-    await axios.patch(`https://localhost:7054/api/ticket/${route.params.id}/category`,
+    await api.patch(`/api/ticket/${route.params.id}/category`,
       { newCategoryId: selectedCategoryId.value },
       {
         withCredentials: true,
@@ -651,7 +651,7 @@ const updateCategory = async () => {
 
 const updateClient = async () => {
   try {
-    await axios.patch(`https://localhost:7054/api/ticket/${route.params.id}/client`,
+    await api.patch(`/api/ticket/${route.params.id}/client`,
       { newClientId: selectedClientId.value },
       {
         withCredentials: true,
@@ -671,8 +671,8 @@ const updateQueue = async () => {
   if (!canChangeQueue.value) return
   if (selectedQueueId.value == null) return
   try {
-    await axios.patch(
-      `https://localhost:7054/api/ticket/${route.params.id}/queue`,
+    await api.patch(
+      `/api/ticket/${route.params.id}/queue`,
       { newQueueId: selectedQueueId.value },
       {
         withCredentials: true,
@@ -716,7 +716,7 @@ const sendComment = async () => {
   })
 
   try {
-    await axios.post(`https://localhost:7054/api/ticket/${route.params.id}/comment`, formData, {
+    await api.post(`/api/ticket/${route.params.id}/comment`, formData, {
       withCredentials: true,
       headers: {
         'Content-Type': 'multipart/form-data',

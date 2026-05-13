@@ -154,7 +154,7 @@
 import { ref, h, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import axios from 'axios'
+import api from '@/services/api';
 
 const router = useRouter()
 const route = useRoute()
@@ -393,7 +393,7 @@ const goToNotifications = () => {
 const fetchNotifications = async () => {
   if (!isAuthenticated.value) return
   try {
-    const response = await axios.get('https://localhost:7054/api/notifications', { withCredentials: true })
+    const response = await api.get('/api/notifications', { withCredentials: true })
     notifications.value = response.data
   } catch (error) {
   }

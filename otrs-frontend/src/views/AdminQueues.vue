@@ -199,10 +199,10 @@
 
 <script setup>
 import { ref, onMounted, inject, reactive, computed } from 'vue'
-import axios from 'axios'
+import api from '@/services/api';
 
 const showNotification = inject('showNotification')
-const API_URL = 'https://localhost:7054/api/Admin'
+const API_URL = '/api/Admin'
 const axiosConfig = { withCredentials: true }
 
 // Podstawowe dane
@@ -253,7 +253,7 @@ const resetSelection = () => {
 
 const fetchQueues = async () => {
   try {
-    const res = await axios.get(`${API_URL}/queues`, axiosConfig)
+    const res = await api.get(`${API_URL}/queues`, axiosConfig)
     queues.value = res.data
   } catch (e) { }
 }
@@ -261,7 +261,7 @@ const fetchQueues = async () => {
 const createQueue = async () => {
   if (!newQueueName.value) return
   try {
-    await axios.post(`${API_URL}/queues`, { name: newQueueName.value }, axiosConfig)
+    await api.post(`${API_URL}/queues`, { name: newQueueName.value }, axiosConfig)
     newQueueName.value = ''
     showAddModal.value = false
     await fetchQueues()
@@ -271,7 +271,7 @@ const createQueue = async () => {
 
 const executeDeleteQueue = async (id) => {
   try {
-    await axios.delete(`${API_URL}/queues/${id}`, axiosConfig)
+    await api.delete(`${API_URL}/queues/${id}`, axiosConfig)
     confirmModal.show = false
     await fetchQueues()
     showNotification('Kolejka usunięta.', 'success')
@@ -291,9 +291,9 @@ const openManageUsers = async (queue) => {
   selectedQueue.value = queue
   resetSelection()
   try {
-    const res = await axios.get(`${API_URL}/queues/${queue.id}/users`, axiosConfig)
+    const res = await api.get(`${API_URL}/queues/${queue.id}/users`, axiosConfig)
     queueUsers.value = res.data
-    const allU = await axios.get(`${API_URL}/users`, axiosConfig)
+    const allU = await api.get(`${API_URL}/users`, axiosConfig)
     allUsers.value = allU.data
   } catch (e) { showNotification('Błąd ładowania danych.', 'error') }
 }
@@ -306,7 +306,7 @@ const closeManageUsers = () => {
 const addUserToQueue = async () => {
   if (!userIdToAdd.value) return
   try {
-    await axios.post(`${API_URL}/queues/${selectedQueue.value.id}/users/${userIdToAdd.value}`, {}, axiosConfig)
+    await api.post(`${API_URL}/queues/${selectedQueue.value.id}/users/${userIdToAdd.value}`, {}, axiosConfig)
     await openManageUsers(selectedQueue.value)
     await fetchQueues()
     resetSelection()
@@ -316,7 +316,7 @@ const addUserToQueue = async () => {
 
 const executeRemoveUser = async (uId) => {
   try {
-    await axios.delete(`${API_URL}/queues/${selectedQueue.value.id}/users/${uId}`, axiosConfig)
+    await api.delete(`${API_URL}/queues/${selectedQueue.value.id}/users/${uId}`, axiosConfig)
     confirmModal.show = false
     await openManageUsers(selectedQueue.value)
     await fetchQueues()

@@ -177,12 +177,12 @@
 import { useUserStore } from '@/stores/user'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api';
 
 const router = useRouter()
 const userStore = useUserStore()
 
-const API_BASE_URL = 'https://localhost:7054/api/Admin'
+const API_BASE_URL = '/api/Admin'
 const axiosConfig = { withCredentials: true }
 
 const form = reactive({
@@ -217,11 +217,11 @@ onMounted(async () => {
   }
   try {
     const [resTypes, resPrios, resCats, resQueues, resClients] = await Promise.all([
-      axios.get(`${API_BASE_URL}/types`, axiosConfig),
-      axios.get(`${API_BASE_URL}/priorities`, axiosConfig),
-      axios.get(`${API_BASE_URL}/categories`, axiosConfig),
-      axios.get(`${API_BASE_URL}/queues`, axiosConfig),
-      axios.get(`${API_BASE_URL}/clients`, axiosConfig),
+      api.get(`${API_BASE_URL}/types`, axiosConfig),
+      api.get(`${API_BASE_URL}/priorities`, axiosConfig),
+      api.get(`${API_BASE_URL}/categories`, axiosConfig),
+      api.get(`${API_BASE_URL}/queues`, axiosConfig),
+      api.get(`${API_BASE_URL}/clients`, axiosConfig),
     ])
 
     types.value = resTypes.data.map((t) => ({ id: t.id || t.Id, name: t.name || t.Name }))
@@ -266,7 +266,7 @@ const submitTicket = async () => {
       QueueId: Number(form.queueId),
     }
 
-    const response = await axios.post('https://localhost:7054/api/Ticket', payload, axiosConfig)
+    const response = await api.post('/api/Ticket', payload, axiosConfig)
 
     const createdTicket = response.data
 

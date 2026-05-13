@@ -232,11 +232,11 @@
 
 <script setup>
 import { ref, onMounted, inject, reactive, computed } from 'vue'
-import axios from 'axios'
+import api from '@/services/api';
 
 const showNotification = inject('showNotification')
-const API_URL = 'https://localhost:7054/api/Admin/clients'
-const USERS_API_URL = 'https://localhost:7054/api/Admin/users'
+const API_URL = '/api/Admin/clients'
+const USERS_API_URL = '/api/Admin/users'
 const axiosConfig = { withCredentials: true }
 
 const clients = ref([])
@@ -281,7 +281,7 @@ const getError = (field) => {
 
 const fetchClients = async () => {
   try {
-    const res = await axios.get(API_URL, axiosConfig)
+    const res = await api.get(API_URL, axiosConfig)
     clients.value = res.data.map(cl => ({
       id: cl.id || cl.Id,
       name: cl.name || cl.Name,
@@ -306,7 +306,7 @@ const fetchClients = async () => {
 
 const fetchUsers = async () => {
   try {
-    const res = await axios.get(USERS_API_URL, axiosConfig)
+    const res = await api.get(USERS_API_URL, axiosConfig)
     allUsers.value = res.data.map(u => ({
       id: u.id || u.Id,
       name: u.name || u.Name,
@@ -400,15 +400,15 @@ const saveClient = async () => {
     }
 
     if (isEditing.value) {
-      await axios.put(`${API_URL}/${currentClient.value.id}`, payload, axiosConfig)
-      await axios.put(`${API_URL}/${currentClient.value.id}/users`, { userIds: selectedUserIds.value }, axiosConfig)
+      await api.put(`${API_URL}/${currentClient.value.id}`, payload, axiosConfig)
+      await api.put(`${API_URL}/${currentClient.value.id}/users`, { userIds: selectedUserIds.value }, axiosConfig)
       showNotification('Zaktualizowano dane klienta.', 'success')
     } else {
-      const createRes = await axios.post(API_URL, payload, axiosConfig)
+      const createRes = await api.post(API_URL, payload, axiosConfig)
       const createdClientId = createRes.data?.id ?? createRes.data?.Id
 
       if (createdClientId) {
-        await axios.put(`${API_URL}/${createdClientId}/users`, { userIds: selectedUserIds.value }, axiosConfig)
+        await api.put(`${API_URL}/${createdClientId}/users`, { userIds: selectedUserIds.value }, axiosConfig)
       }
 
       showNotification('Dodano nowego klienta.', 'success')
@@ -430,7 +430,7 @@ const confirmDelete = (client) => {
   confirmModal.message = `Czy na pewno chcesz usunąć klienta "${client.name}"? Spowoduje to problemy w przypisanych do niego kategoriach i zgłoszeniach.`
   confirmModal.action = async () => {
     try {
-      await axios.delete(`${API_URL}/${client.id}`, axiosConfig)
+      await api.delete(`${API_URL}/${client.id}`, axiosConfig)
       confirmModal.show = false
       await fetchClients()
       showNotification('Klient został usunięty.', 'success')
