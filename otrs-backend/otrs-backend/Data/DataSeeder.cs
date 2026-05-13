@@ -30,6 +30,20 @@ namespace otrs_backend.Data
             }
         }
 
+        public static void SeedClients(AppDbContext context)
+        {
+            if (!context.Clients.Any())
+            {
+                var client = new Client
+                {
+                    Name = "Hustletrack ITSM",
+                    Description = "Główny klient systemowy"
+                };
+                context.Clients.Add(client);
+                context.SaveChanges();
+            }
+        }
+
         public static void SeedUsers(AppDbContext context)
         {
             if (!context.Users.Any())
@@ -37,6 +51,8 @@ namespace otrs_backend.Data
                 var adminRole = context.Roles.FirstOrDefault(r => r.Name == "Admin");
                 var technikRole = context.Roles.FirstOrDefault(r => r.Name == "Technik");
                 var klientRole = context.Roles.FirstOrDefault(r => r.Name == "Klient");
+                
+                var defaultClient = context.Clients.FirstOrDefault(c => c.Name == "Hustletrack ITSM");
 
                 var adminUser = new User
                 {
@@ -70,7 +86,8 @@ namespace otrs_backend.Data
                     Bio = "Zwykły użytkownik",
                     AvatarUrl = "",
                     BirthDate = DateTime.Now,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("useruser")
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("useruser"),
+                    ClientId = defaultClient?.Id
                 };
                 if (klientRole != null) standardUser.Roles.Add(klientRole);
 
@@ -83,8 +100,10 @@ namespace otrs_backend.Data
         {
             if (!context.Tickets.Any())
             {
+                var defaultClient = context.Clients.FirstOrDefault(c => c.Name == "Hustletrack ITSM");
+
                 // Ensure required dictionary data exists before creating a ticket
-                var category = context.Categories.FirstOrDefault() ?? new Category { Name = "Sprzęt", Description = "Awarie sprzętowe" };
+                var category = context.Categories.FirstOrDefault() ?? new Category { Name = "Sprzęt", Description = "Awarie sprzętowe", ClientId = defaultClient?.Id };
                 var priority = context.Priorities.FirstOrDefault() ?? new Priority { Name = "Wysoki", Description = "Wysoki priorytet", Level = 1 };
                 var type = context.Types.FirstOrDefault() ?? new Models.Type { Name = "Incydent", Description = "Zgłoszenie awarii" };
                 var queue = context.Ques.FirstOrDefault() ?? new Que { Name = "IT Support" };

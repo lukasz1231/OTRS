@@ -144,6 +144,7 @@ using (var scope = app.Services.CreateScope())
 
     otrs_backend.Data.DataSeeder.SeedRoles(context);
     otrs_backend.Data.DataSeeder.SeedStatuses(context);
+    otrs_backend.Data.DataSeeder.SeedClients(context);
     otrs_backend.Data.DataSeeder.SeedUsers(context);
     otrs_backend.Data.DataSeeder.SeedTickets(context);
 }

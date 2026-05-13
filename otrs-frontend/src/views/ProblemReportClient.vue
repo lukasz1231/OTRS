@@ -196,21 +196,8 @@ const submitTicket = async () => {
       QueueId: 1, // Domyślna kolejka
     }
 
-    const response = await fetch('/api/ticket', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.message || 'Wystąpił błąd podczas tworzenia zgłoszenia.')
-    }
-
-    const createdTicket = await response.json()
+    const response = await api.post('/api/ticket', payload, axiosConfig)
+    const createdTicket = response.data
 
     successMessage.value =
       'Zgłoszenie zostało pomyślnie utworzone! Za chwilę zostaniesz przekierowany.'
