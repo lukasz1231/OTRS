@@ -259,6 +259,7 @@
 import { reactive, ref, computed, inject, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import api from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -453,39 +454,8 @@ const handleSubmit = async () => {
       }
     }
 
-    const response = await fetch(backendUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(body),
-    })
-
-    let data
-    const contentType = response.headers.get('content-type') || ''
-
-    if (contentType.includes('application/json')) {
-      data = await response.json()
-    } else {
-      data = await response.text()
-    }
-
-    if (!response.ok) {
-      let errorMessage = 'Wystąpił błąd. Spróbuj ponownie.'
-
-      if (typeof data === 'string') {
-        errorMessage = data
-      } else if (data.title) {
-        errorMessage = data.title
-      } else if (data.message) {
-        errorMessage = data.message
-      } else if (data.errors) {
-        errorMessage = Object.values(data.errors).flat()[0]
-      }
-
-      throw new Error(errorMessage)
-    }
+    const response = await api.post(backendUrl, body)
+    const data = response.data
 
     userStore.setUser(data.user)
 
@@ -504,8 +474,24 @@ const handleSubmit = async () => {
 
     router.push({ name: 'dashboard' })
   } catch (error) {
-    globalError.value = error.message
-    showNotification(error.message, 'error')
+    let errorMessage = 'Wystąpił błąd. Spróbuj ponownie.'
+    if (error.response && error.response.data) {
+      const errData = error.response.data
+      if (typeof errData === 'string') {
+        errorMessage = errData
+      } else if (errData.title) {
+        errorMessage = errData.title
+      } else if (errData.message) {
+        errorMessage = errData.message
+      } else if (errData.errors) {
+        errorMessage = Object.values(errData.errors).flat()[0]
+      }
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
+    globalError.value = errorMessage
+    showNotification(errorMessage, 'error')
   } finally {
     isLoading.value = false
   }
